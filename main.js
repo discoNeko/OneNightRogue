@@ -16,6 +16,10 @@
 		this.mwait = 0;
 	}
 	var MainChara = new Chara();
+	var e_num = 150;
+	var Enemy = [];
+
+	var emap = [];
 
 	var row = 50;
 	var col = 50;
@@ -27,23 +31,127 @@
 	canvas.addEventListener("click", onClick, false);
 	canvas.addEventListener('mousemove', onMove, false);
 	var ctx = canvas.getContext('2d');
-	
+
 	init();
-	requestId = window.requestAnimationFrame(renderTitle); 
+	//requestId = window.requestAnimationFrame(renderTitle); 
 
 	function init(){
 		setInitMap();
+		setEnemy();
+	}
+
+	function setEnemy(){
+		for(var i = 0; i < e_num; i++){
+			Enemy[i] = new Chara();
+			Enemy[i].img.src = 'img/2.png';
+			while(true){
+				var x = Math.floor(Math.random()*row);
+				var y = Math.floor(Math.random()*col);
+				if(emap[x][y]==-1){
+					Enemy[i].x = x;
+					Enemy[i].y = y;
+					emap[x][y] = i;
+					break;
+				}
+			}
+		}
+		Enemy[0].img.src = 'img/3.png';
 	}
 
 	function setInitMap(){
+		//var data = loadCSV();
+		setMapEnemy();
+		setMapRandom();
+	}
+
+	function setMapEnemy(){
 		for(var i = 0; i < row; i++){
-			map[i] = [];
+			emap[i] = [];
 			for(var j = 0; j < col; j++){
-				var rnd = Math.floor(Math.random()*2);
-				if(rnd==0)
-					map[i][j] = true;
+				emap[i][j] = -1;
 			}
 		}
+	}
+
+	function setMapRandom(){
+
+		for(var i = 0; i < row; i++){
+			map[i] = [];
+		}
+
+		var r = Math.floor(Math.random()*30+10);
+		var c = Math.floor(Math.random()*30+10);
+		genSpace(0,0,r,c);
+		genSpace(r,0,row,c);
+		genSpace(0,c,r,col);
+		genSpace(r,c,row,col);
+		
+
+		/*
+		for(var i = 0; i < row; i++){
+			for(var j = 0; j < col; j++){
+				map[i][j] = true;
+			}	
+		}
+		*/
+		requestId = window.requestAnimationFrame(renderTitle); 
+	}
+
+	function genSpace(sx,sy,gx,gy){
+		if(sx<5)sx+=5;
+		if(sy<5)sy+=5;
+		if(gx>row-5)gx-=5;
+		if(gy>col-5)gy-=5;
+		var dx = gx - sx;
+		var dy = gy - sy;
+		var r = Math.floor(Math.random()*dx)+sx+5;
+		var c = Math.floor(Math.random()*dy)+sy+5;
+		for(var i = sx; i < r; i++){
+			for(var j = sy; j < c; j++){
+				console.log(i+" "+j);
+				map[i][j] = true;
+			}
+		}
+	}
+
+	function loadCSV(){
+		var data;
+		var xmlhttp = new XMLHttpRequest();
+		xmlhttp.open("GET","src/map.csv",true);
+		xmlhttp.send(null);
+		xmlhttp.onload = function(){
+			var str = xmlhttp.responseText;
+			data = str.split(/\r\n/);
+			setMap(data);
+		}
+	}
+
+	function setMap(data){
+		var dmap = [];
+		for(var i = 0; i < row; i++){
+			map[i] = [];
+			dmap[i] = data[i].split(',');
+		}
+		for(var i = 0; i < row; i++){
+			for(var j = 0; j < col; j++){
+				if(dmap[j][i]==0)
+					map[i][j]=true;
+			}
+		}
+		/*
+		for(var i = 0; i < row; i++){
+			var s = "";
+			for(var j = 0; j < col; j++){
+				if(map[i][j]){
+					s += "O";
+				}else{
+					s += "X";
+				}
+			}
+			console.log(s);
+		}
+		*/
+		requestId = window.requestAnimationFrame(renderTitle); 
 	}
 
 	function renderTitle(){
@@ -71,11 +179,11 @@
 		drawMap();
 		drawMenu();
 		drawChar();
+		drawEnemy();
 
 		//debug
 		ctx.fillStyle = '#fff';
 		ctx.fillText("move : ASDW",150,555);
-
 
 		requestId = window.requestAnimationFrame(renderTitle); 
 	}
@@ -110,13 +218,12 @@
 	}
 
 	function moveChar(mx,my){
-		//console.log(mx+my);
-		var xx = MainChara.x;
-		//console.log(xx);
 		if(canMove(mx,my)){
 			MainChara.x += mx;
 			MainChara.y += my;
 		}
+		moveEnemy();
+		scanEnemyPos();
 		console.log("now "+MainChara.x+" "+MainChara.y);
 	}
 
@@ -141,6 +248,12 @@
 		return v;
 	}
 
+	function moveEnemy(){
+		for(var i = 0; i < 15; i++){
+
+		}
+	}
+
 	function drawMap(){
 		var ax = 155;
 		var ay = 80;
@@ -160,7 +273,6 @@
 				my = pos.my;
 				var xx = mx + i;
 				var yy = my + j;
-
 				if(cx == xx && cy == yy){
 					ctx.fillStyle = '#a00';
 					ctx.drawImage(map_chip,0,0,32,32,i*25+sx,j*25+sy,24,24);
@@ -237,6 +349,43 @@
 			case 8 : //up
 				ctx.drawImage(MainChara.img,20*mot,84,20,28,posx,posy,28,38);
 				break;
+		}
+	}
+
+	function drawEnemy(){
+		var posx = 0, posy = 0;
+		var sx = 165;
+		var sy = 35;
+		var cx = MainChara.x | 0;
+		var cy = MainChara.y | 0;
+		var mx = cx - 9;
+		var my = cy - 8;
+		var mot = Math.floor(MainChara.mwait / 100);
+		if(mot>2)mot = 1;
+		for(var i = 0; i < 19; i++){
+			for(var j = 0; j < 17; j++){
+				var pos = drawMapLimitCheck(mx,my);
+				mx = pos.mx;
+				my = pos.my;
+				var xx = mx + i;
+				var yy = my + j;
+				if(emap[xx][yy]!=-1){
+					posx = i*25+sx-2;
+					posy = j*25+sy-15;
+					ctx.drawImage(Enemy[emap[xx][yy]].img,20*mot,0,20,28,posx,posy,28,38);
+				}
+			}
+		}
+	}
+
+	function scanEnemyPos(){
+		for(var i = 0; i < row; i++){
+			for(var j = 0; j < col; j++){
+				emap[i][j] = -1;
+			}
+		}
+		for(var i = 0; i < e_num; i++){
+			emap[Enemy[i].x][Enemy[i].y] = i;
 		}
 	}
 
