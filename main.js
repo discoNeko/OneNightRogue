@@ -5,6 +5,15 @@
 	var map_chip = new Image();
 	map_chip.src = 'img/map.png';
 
+	var Effect = function (){
+		this.exist = false;
+		this.img = new Image();
+		this.img.src = 'img/eff.png';
+		this.mwait = 0;
+	}
+	var eff_num = 100;
+	var eff = [];
+
 	var Chara = function (){
 		this.x = 9;
 		this.y = 12;
@@ -39,6 +48,7 @@
 	function init(){
 		setInitMap();
 		setEnemy();
+		setEff();
 	}
 
 	function setEnemy(){
@@ -155,6 +165,39 @@
 		requestId = window.requestAnimationFrame(renderTitle); 
 	}
 
+	function setEff(){
+		for(var i = 0; i < eff_num; i++){
+			eff[i] = new Effect();
+		}
+	}
+
+	function appEffect(){
+		for(var i = 0; i < eff_num; i++){
+			if(!eff[i].exist){
+				eff[i].exist = true;
+				eff[i].mwait = 0;
+				motionEffect();
+				break;
+			}
+		}
+	}
+
+	function motionEffect(){
+		var v = false;
+		for(var i = 0; i < eff_num; i++){
+			if(eff[i].exist){
+				eff[i].mwait += 5;
+				var mot = Math.floor(eff[i].mwait/10);
+				if(eff[i].mwait>100)eff[i].exist = false;
+				ctx.drawImage(eff[i].img,0,mot*240,320,240,0,0,800,600);
+				v = true;
+			}
+		}
+		if(v){
+			window.requestAnimationFrame(motionEffect);
+		}
+	}
+
 	function renderTitle(){
 		//var str = "SampleText";
 		//var margin = w - 20*str.length;
@@ -185,7 +228,7 @@
 		//debug
 		ctx.fillStyle = '#fff';
 		ctx.fillText("move : ASDW",150,520);
-		ctx.fillText("attack : Z",150,570);
+		ctx.fillText("attack : Enter",150,570);
 
 		requestId = window.requestAnimationFrame(renderTitle); 
 	}
@@ -414,6 +457,7 @@
 			case 8 : ty--; break;
 		}
 		if(-1<tx && tx<row-1 && -1<ty && ty<col-1 && emap[tx][ty]!=-1){
+			appEffect();
 			Enemy[emap[tx][ty]].exist = false;
 		}
 		scanEnemyPos();
@@ -458,8 +502,8 @@
 			moveChar(0,-1);
 			modCharDir(8);
 		}
-		if(on_key[90]){
-			//z
+		if(on_key[13]){
+			//enter
 			attack();
 		}
 
