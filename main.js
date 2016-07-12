@@ -2,11 +2,18 @@
 	var w = 800, h = 600;
 	var requestId;
 
+	var map_chip = new Image();
+	map_chip.src = 'img/map.png';
+
 	var Chara = function (){
 		this.x = 9;
 		this.y = 12;
+		this.dir = 8;
 		this.hp = 100;
 		this.mn = 100;
+		this.img = new Image();
+		this.img.src = 'img/1.png';
+		this.mwait = 0;
 	}
 	var MainChara = new Chara();
 
@@ -14,8 +21,7 @@
 	var col = 50;
 	var map = [];
 	var on_key = [];
-
-
+	var on_key_done = [];
 
 	var canvas = document.getElementById('canvas');
 	canvas.addEventListener("click", onClick, false);
@@ -58,7 +64,10 @@
 		//ctx.strokeText(str,margin/2,455,510);
 		//ctx.fillText(str,margin/2,455);
 
-		onKeyCheck();
+		//frame count
+		motionChar();
+
+		//onKeyCheck();
 		drawMap();
 		drawMenu();
 		drawChar();
@@ -71,11 +80,33 @@
 		requestId = window.requestAnimationFrame(renderTitle); 
 	}
 
+	function motionChar(){
+		MainChara.mwait+=2;
+		if(MainChara.mwait>400)
+			MainChara.mwait = 0;
+	}
+
 	function onKeyCheck(){
-		if(on_key[65])moveChar(-1,0);//a
-		if(on_key[83])moveChar(0,1);//s
-		if(on_key[68])moveChar(1,0);//d
-		if(on_key[87])moveChar(0,-1);//w
+		//a
+		if(on_key[65] && !on_key_done[65]){
+			on_key_done[65] = true;
+			moveChar(-1,0);
+		}
+		//s
+		if(on_key[83] && !on_key_done[83]){
+			on_key_done[83] = true;
+			moveChar(0,1);
+		}
+		//d
+		if(on_key[68] && !on_key_done[68]){
+			on_key_done[68] = true;
+			moveChar(1,0);
+		}
+		//w
+		if(on_key[87] && !on_key_done[87]){
+			on_key_done[87] = true;
+			moveChar(0,-1);
+		}
 	}
 
 	function moveChar(mx,my){
@@ -87,6 +118,11 @@
 			MainChara.y += my;
 		}
 		console.log("now "+MainChara.x+" "+MainChara.y);
+	}
+
+	function modCharDir(dir){
+		MainChara.mwait += 100;
+		MainChara.dir = dir;
 	}
 
 	function canMove(mx,my){
@@ -108,7 +144,7 @@
 	function drawMap(){
 		var ax = 155;
 		var ay = 80;
-		ctx.fillStyle = '#ddd';
+		ctx.fillStyle = '#070';
 		ctx.fillRect(ax,ay-55,w-2*ax+5,h-2*ay+5);
 
 		var sx = 165;
@@ -119,27 +155,39 @@
 		var my = cy - 8;
 		for(var i = 0; i < 19; i++){
 			for(var j = 0; j < 17; j++){
-				if(mx<0)
-					mx = 0;
-				if(mx+19>50)
-					mx = 31;
-				if(my<0)
-					my = 0;
-				if(my+17>50)
-					my = 33;
-				var xx = mx+i;
-				var yy = my+j;
+				var pos = drawMapLimitCheck(mx,my);
+				mx = pos.mx;
+				my = pos.my;
+				var xx = mx + i;
+				var yy = my + j;
+
 				if(cx == xx && cy == yy){
 					ctx.fillStyle = '#a00';
+					ctx.drawImage(map_chip,0,0,32,32,i*25+sx,j*25+sy,24,24);
 				}else if(map[xx][yy]){
 					ctx.fillStyle = '#a0a';
+					ctx.drawImage(map_chip,0,0,32,32,i*25+sx,j*25+sy,24,24);
 				}else{
 					ctx.fillStyle = '#aa0';
+					ctx.drawImage(map_chip,0,0,32,32,i*25+sx,j*25+sy,24,24);
+					ctx.drawImage(map_chip,224,0,32,32,i*25+sx,j*25+sy,24,24);
 				}
-				ctx.fillRect(i*25+sx,j*25+sy,24,24);
+				//ctx.fillRect(i*25+sx,j*25+sy,24,24);
 			}
 		}
 
+	}
+
+	function drawMapLimitCheck(mx,my){
+		if(mx < 0)
+			mx = 0;
+		if(mx + 19 > 50)
+			mx = 31;
+		if(my < 0)
+			my = 0;
+		if(my + 17 > 50)
+			my = 33;
+		return {mx,my};
 	}
 
 	function drawMenu(){
@@ -151,7 +199,45 @@
 	}
 
 	function drawChar(){
+		var dir = MainChara.dir;
 
+		var posx = 0, posy = 0;
+		var sx = 165;
+		var sy = 35;
+		var cx = MainChara.x | 0;
+		var cy = MainChara.y | 0;
+		var mx = cx - 9;
+		var my = cy - 8;
+		for(var i = 0; i < 19; i++){
+			for(var j = 0; j < 17; j++){
+				var pos = drawMapLimitCheck(mx,my);
+				mx = pos.mx;
+				my = pos.my;
+				var xx = mx + i;
+				var yy = my + j;
+				if(cx == xx && cy == yy){
+					posx = i*25+sx-2;
+					posy = j*25+sy-15;
+					break;
+				}
+			}
+		}
+		var mot = Math.floor(MainChara.mwait / 100);
+		if(mot>2)mot = 1;
+		switch(dir){
+			case 2 : //down
+				ctx.drawImage(MainChara.img,20*mot,0,20,28,posx,posy,28,38);
+				break;
+			case 4 : //left
+				ctx.drawImage(MainChara.img,20*mot,28,20,28,posx,posy,28,38);
+				break;
+			case 6 : //right
+				ctx.drawImage(MainChara.img,20*mot,56,20,28,posx,posy,28,38);
+				break;
+			case 8 : //up
+				ctx.drawImage(MainChara.img,20*mot,84,20,28,posx,posy,28,38);
+				break;
+		}
 	}
 
 	function onClick(e){
@@ -172,11 +258,29 @@
 		var key = e.keyCode;
 		//console.log(key);
 		on_key[key] = true;
+		if(on_key[65]){
+			moveChar(-1,0);
+			modCharDir(4);
+		}//a
+		if(on_key[83]){
+			moveChar(0,1);
+			modCharDir(2);
+		}//s
+		if(on_key[68]){
+			moveChar(1,0);
+			modCharDir(6);
+		}//d
+		if(on_key[87]){
+			moveChar(0,-1);
+			modCharDir(8);
+		}//w
+
 	};
 
 	document.onkeyup = function (e){
 		var key = e.keyCode;
 		on_key[key] = false;
+		on_key_done[key] = false;
 	};
 	
 })();
