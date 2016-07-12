@@ -11,6 +11,7 @@
 		this.dir = 8;
 		this.hp = 100;
 		this.mn = 100;
+		this.exist = true;
 		this.img = new Image();
 		this.img.src = 'img/1.png';
 		this.mwait = 0;
@@ -183,7 +184,8 @@
 
 		//debug
 		ctx.fillStyle = '#fff';
-		ctx.fillText("move : ASDW",150,555);
+		ctx.fillText("move : ASDW",150,520);
+		ctx.fillText("attack : Z",150,570);
 
 		requestId = window.requestAnimationFrame(renderTitle); 
 	}
@@ -194,6 +196,7 @@
 			MainChara.mwait = 0;
 	}
 
+/*
 	function onKeyCheck(){
 		//a
 		if(on_key[65] && !on_key_done[65]){
@@ -216,7 +219,7 @@
 			moveChar(0,-1);
 		}
 	}
-
+*/
 	function moveChar(mx,my){
 		if(canMove(mx,my)){
 			MainChara.x += mx;
@@ -245,6 +248,16 @@
 			console.log("yy false");
 			v = false;
 		}
+		if(collisionEnemy(xx,yy)){
+			v = false;
+		}
+		return v;
+	}
+
+	function collisionEnemy(x,y){
+		var v = false;
+		if(emap[x][y]!=-1)
+			v = true;
 		return v;
 	}
 
@@ -385,8 +398,26 @@
 			}
 		}
 		for(var i = 0; i < e_num; i++){
-			emap[Enemy[i].x][Enemy[i].y] = i;
+			if(Enemy[i].exist)
+				emap[Enemy[i].x][Enemy[i].y] = i;
 		}
+	}
+
+	function attack(){
+		var tx = MainChara.x;
+		var ty = MainChara.y;
+		var d = MainChara.dir;
+		switch(d){
+			case 2 : ty++; break;
+			case 4 : tx--; break;
+			case 6 : tx++; break;
+			case 8 : ty--; break;
+		}
+		if(-1<tx && tx<row-1 && -1<ty && ty<col-1 && emap[tx][ty]!=-1){
+			Enemy[emap[tx][ty]].exist = false;
+		}
+		scanEnemyPos();
+
 	}
 
 	function onClick(e){
@@ -405,24 +436,32 @@
 
 	document.onkeydown = function (e){
 		var key = e.keyCode;
-		//console.log(key);
+		console.log(key);
 		on_key[key] = true;
 		if(on_key[65]){
+			//a
 			moveChar(-1,0);
 			modCharDir(4);
-		}//a
+		}
 		if(on_key[83]){
+			//s
 			moveChar(0,1);
 			modCharDir(2);
-		}//s
+		}
 		if(on_key[68]){
+			//d
 			moveChar(1,0);
 			modCharDir(6);
-		}//d
+		}
 		if(on_key[87]){
+			//w
 			moveChar(0,-1);
 			modCharDir(8);
-		}//w
+		}
+		if(on_key[90]){
+			//z
+			attack();
+		}
 
 	};
 
