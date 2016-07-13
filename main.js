@@ -236,7 +236,7 @@
 
 		
 
-		drawMenu();
+		//drawMenu();
 
 		//debug
 		//ctx.fillStyle = '#fff';
@@ -348,21 +348,35 @@
 		var mx = cx - 10;
 		var my = cy - 9;
 		//補正値
-		var hx = dd*dx[d];
-		var hy = dd*dy[d];
+		//var hx = dd*dx[d];
+		//var hy = dd*dy[d];
 		for(var i = 0; i < 21; i++){
 			for(var j = 0; j < 19; j++){
 				var pos = drawMoveMapLimitCheck(mx,my);
-				mx = pos.mx;
-				my = pos.my;
-				var xx = mx + i;
-				var yy = my + j;
-				if(pos.hit){
-					
-				}else{
-					drawMoveMap(xx,yy,(i-1)*25+sx+hx,(j-1)*25+sy+hy);
-					//ループの最初と最後はタイルが見切れるので、補正を入れる
+				//mx = pos.mx;
+				//my = pos.my;
+				//var xx = mx + i;
+				//var yy = my + j;
+				var xx = pos.mx + i;
+				var yy = pos.my + j;
+				//補正値　タイルの描画開始位置
+				var hi = i, hj = j;
+				//補正値 タイルが動く場合
+				var hx = 0, hy = 0;
+				if(pos.xhit==1){
+					hi = i-2;
+				}else if(pos.xhit==0){
+					hi = i-1;
+					hx = dd*dx[d];
 				}
+				if(pos.yhit==1){
+					hj = j-2;
+				}else if(pos.yhit==0){
+					hj = j-1;
+					hy = dd*dy[d];
+				}
+				drawMoveMap(xx,yy,hi*25+sx+hx,hj*25+sy+hy);
+				//ループの最初と最後はタイルが見切れるので、補正を入れる
 			}
 		}
 
@@ -372,39 +386,62 @@
 		for(var i = 0; i < 21; i++){
 			for(var j = 0; j < 19; j++){
 				var pos = drawMoveMapLimitCheck(mx,my);
-				mx = pos.mx;
-				my = pos.my;
-				var xx = mx + i;
-				var yy = my + j;
+				//mx = pos.mx;
+				//my = pos.my;
+				//var xx = mx + i;
+				//var yy = my + j;
+				var xx = pos.mx + i;
+				var yy = pos.my + j;
+				//補正値　タイルの描画開始位置
+				var hi = i, hj = j;
+				//補正値 タイルが動く場合
+				var hx = 0, hy = 0;
+				//補正値 charaが動く場合
+				var chx = dd*dx[d], chy = dd*dy[d];
+				if(pos.xhit==1){
+					hi = i-2;
+				}else if(pos.xhit==0){
+					hi = i-1;
+					hx = dd*dx[d];
+					chx = 0;
+				}
+				if(pos.yhit==1){
+					hj = j-2;
+				}else if(pos.yhit==0){
+					hj = j-1;
+					hy = dd*dy[d];
+					chy = 0;
+				}
 				if(emap[xx][yy] != -1){
-					drawMoveEnemy(xx,yy,(i-1)*25+sx-2+hx,(j-1)*25+sy-15+hy);
+					drawMoveEnemy(xx,yy,hi*25+sx-2+hx,hj*25+sy-15+hy);
 				}
 				if(cx == xx && cy == yy){
-					drawMoveChar((i-1)*25+sx-2,(j-1)*25+sy-15);
+					drawMoveChar(hi*25+sx-2-chx,hj*25+sy-15-chy);
 				}
 			}
 		}
 	}
 
 	function drawMoveMapLimitCheck(mx,my){
-		var hit = false;
+		//hit マップの端にcharaが居るときを判定
+		var xhit = 0, yhit = 0;
 		if(mx < 0){
 			mx = 0;
-			hit = true;
+			xhit = -1;
 		}
 		if(mx + 21 > 50){
 			mx = 29;
-			hit = true;
+			xhit = 1;
 		}
 		if(my < 0){
 			my = 0;
-			hit = true;
+			yhit = -1;
 		}
 		if(my + 19 > 50){
 			my = 31;
-			hit = true;
+			yhit = 1;
 		}
-		return {mx,my,hit};
+		return {mx,my,xhit,yhit};
 	}
 
 	function drawMoveMap(r,c,x,y){
