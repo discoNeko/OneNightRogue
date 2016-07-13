@@ -53,24 +53,7 @@
 		setEff();
 	}
 
-	function setEnemy(){
-		for(var i = 0; i < e_num; i++){
-			Enemy[i] = new Chara();
-			Enemy[i].img.src = 'img/2.png';
-			while(true){
-				var x = Math.floor(Math.random()*row);
-				var y = Math.floor(Math.random()*col);
-				if(emap[x][y]==-1){
-					Enemy[i].x = x;
-					Enemy[i].y = y;
-					emap[x][y] = i;
-					break;
-				}
-			}
-		}
-		Enemy[0].img.src = 'img/3.png';
-	}
-
+	//map,emapを初期化
 	function setInitMap(){
 		//var data = loadCSV();
 		setMapEnemy();
@@ -87,7 +70,6 @@
 	}
 
 	function setMapRandom(){
-
 		for(var i = 0; i < row; i++){
 			map[i] = [];
 		}
@@ -110,6 +92,7 @@
 		requestId = window.requestAnimationFrame(renderTitle); 
 	}
 
+	//mapランダム生成
 	function genSpace(sx,sy,gx,gy){
 		if(sx<5)sx+=5;
 		if(sy<5)sy+=5;
@@ -152,6 +135,7 @@
 			}
 		}
 		/*
+		//map確認
 		for(var i = 0; i < row; i++){
 			var s = "";
 			for(var j = 0; j < col; j++){
@@ -167,6 +151,26 @@
 		requestId = window.requestAnimationFrame(renderTitle); 
 	}
 
+	//enemy初期化
+	function setEnemy(){
+		for(var i = 0; i < e_num; i++){
+			Enemy[i] = new Chara();
+			Enemy[i].img.src = 'img/2.png';
+			while(true){
+				var x = Math.floor(Math.random()*row);
+				var y = Math.floor(Math.random()*col);
+				if(emap[x][y]==-1){
+					Enemy[i].x = x;
+					Enemy[i].y = y;
+					emap[x][y] = i;
+					break;
+				}
+			}
+		}
+		Enemy[0].img.src = 'img/3.png';
+	}
+
+	//effect初期化
 	function setEff(){
 		for(var i = 0; i < eff_num; i++){
 			eff[i] = new Effect();
@@ -224,24 +228,12 @@
 		//onKeyCheck();
 		if(move_now!=-1){
 			drawMoveCalc();
-			//drawMoveChar();
 			moveDoneCheck();
-			//drawMoveEnemy();
 		}else{
-			drawMap();
-			drawChar();
-			drawEnemy();
+			drawCalc();
 		}
 
-
-		
-
 		//drawMenu();
-
-		//debug
-		//ctx.fillStyle = '#fff';
-		//ctx.fillText("move : ASDW",150,520);
-		//ctx.fillText("attack : Enter",150,570);
 
 		requestId = window.requestAnimationFrame(renderTitle); 
 	}
@@ -287,59 +279,10 @@
 
 */
 
-/*
-
-	//移動中の滑らかな移動を描画
-	function drawMoveMap(){
-		move_now += 10;
-		var dd = Math.floor(24*move_now/100);
-		var d = Math.floor(MainChara.dir/2) - 1;
-		var dx = [0,1,-1,0];
-		var dy = [-1,0,0,1];
-
-		var ax = 155;
-		var ay = 80;
-		ctx.fillStyle = '#070';
-		ctx.fillRect(ax,ay-55,w-2*ax+5,h-2*ay+5);
-
-		var sx = 165;
-		var sy = 35;
-		var cx = MainChara.x | 0;
-		var cy = MainChara.y | 0;
-		var mx = cx - 10;
-		var my = cy - 9;
-		//補正値
-		sx += dd*dx[d];
-		sy += dd*dy[d];
-		for(var i = 0; i < 21; i++){
-			for(var j = 0; j < 19; j++){
-				var pos = drawMoveMapLimitCheck(mx,my);
-				mx = pos.mx;
-				my = pos.my;
-				var xx = mx + i;
-				var yy = my + j;
-				//ループの最初と最後はタイルが見切れるので、補正を入れる
-				if(cx == xx && cy == yy){
-					ctx.fillStyle = '#a00';
-					ctx.drawImage(map_chip,0,0,32,32,(i-1)*25+sx,(j-1)*25+sy,24,24);
-				}else if(map[xx][yy]){
-					ctx.fillStyle = '#a0a';
-					ctx.drawImage(map_chip,0,0,32,32,(i-1)*25+sx,(j-1)*25+sy,24,24);
-				}else{
-					ctx.fillStyle = '#aa0';
-					ctx.drawImage(map_chip,0,0,32,32,(i-1)*25+sx,(j-1)*25+sy,24,24);
-					ctx.drawImage(map_chip,224,0,32,32,(i-1)*25+sx,(j-1)*25+sy,24,24);
-				}
-				//ctx.fillRect(i*25+sx,j*25+sy,24,24);
-			}
-		}
-	}
-*/
-
 	//移動中の滑らかな移動を描画
 	//描画位置を一括で計算して、map,chara,enemyそれぞれに値を渡す
 	function drawMoveCalc(){
-		move_now += 10;
+		move_now += 25;
 		var dd = Math.floor(24*move_now/100);
 		var d = Math.floor(MainChara.dir/2) - 1;
 		var dx = [0,1,-1,0];
@@ -356,17 +299,9 @@
 		var cy = MainChara.y | 0;
 		var mx = cx - 10;
 		var my = cy - 9;
-		//補正値
-		//var hx = dd*dx[d];
-		//var hy = dd*dy[d];
 		var pos = drawMoveMapLimitCheck(mx,my);
 		for(var i = 0; i < 21; i++){
 			for(var j = 0; j < 19; j++){
-				//var pos = drawMoveMapLimitCheck(mx,my);
-				//mx = pos.mx;
-				//my = pos.my;
-				//var xx = mx + i;
-				//var yy = my + j;
 				var xx = pos.mx + i;
 				var yy = pos.my + j;
 				//補正値　タイルの描画開始位置
@@ -396,6 +331,8 @@
 					hx = dd*dx[d];
 				if(dir==8 && MainChara.y==41)
 					hy = dd*dy[d];
+
+				//タイル描画
 				drawMoveMap(xx,yy,hi*25+sx+hx,hj*25+sy+hy);
 				//ループの最初と最後はタイルが見切れるので、補正を入れる
 			}
@@ -406,11 +343,6 @@
 		//タイルを移動させずにcharaを移動させる
 		for(var i = 0; i < 21; i++){
 			for(var j = 0; j < 19; j++){
-				//var pos = drawMoveMapLimitCheck(mx,my);
-				//mx = pos.mx;
-				//my = pos.my;
-				//var xx = mx + i;
-				//var yy = my + j;
 				var xx = pos.mx + i;
 				var yy = pos.my + j;
 				//補正値　タイルの描画開始位置
@@ -453,6 +385,7 @@
 					chy = 0;
 				}
 
+				//chara,enemy描画
 				if(emap[xx][yy] != -1){
 					drawMoveEnemy(xx,yy,hi*25+sx-2+hx,hj*25+sy-15+hy);
 				}
@@ -522,53 +455,6 @@
 			ctx.drawImage(map_chip,224,0,32,32,x,y,24,24);
 		}
 	}
-/*
-
-	function drawMoveChar(){
-		var dir = MainChara.dir;
-
-		var posx = 0, posy = 0;
-		var sx = 165;
-		var sy = 35;
-		var cx = MainChara.x | 0;
-		var cy = MainChara.y | 0;
-		var mx = cx - 9;
-		var my = cy - 8;
-		for(var i = 0; i < 19; i++){
-			for(var j = 0; j < 17; j++){
-				var pos = drawMapLimitCheck(mx,my);
-				mx = pos.mx;
-				my = pos.my;
-				var xx = mx + i;
-				var yy = my + j;
-				if(cx == xx && cy == yy){
-					posx = i*25+sx-2;
-					posy = j*25+sy-15;
-					break;
-				}
-			}
-		}
-		var mot = Math.floor(MainChara.mwait / 100);
-		if(mot>2)mot = 1;
-		switch(dir){
-			case 2 : //down
-				ctx.drawImage(MainChara.img,20*mot,0,20,28,posx,posy,28,38);
-				break;
-			case 4 : //left
-				ctx.drawImage(MainChara.img,20*mot,28,20,28,posx,posy,28,38);
-				break;
-			case 6 : //right
-				ctx.drawImage(MainChara.img,20*mot,56,20,28,posx,posy,28,38);
-				break;
-			case 8 : //up
-				ctx.drawImage(MainChara.img,20*mot,84,20,28,posx,posy,28,38);
-				break;
-		}
-	}
-
-
-*/
-
 
 	function drawMoveChar(x,y){
 		var dir = MainChara.dir;
@@ -590,35 +476,6 @@
 		}
 	}
 
-/*
-
-	function drawMoveEnemy(){
-		var posx = 0, posy = 0;
-		var sx = 165;
-		var sy = 35;
-		var cx = MainChara.x | 0;
-		var cy = MainChara.y | 0;
-		var mx = cx - 9;
-		var my = cy - 8;
-		var mot = Math.floor(MainChara.mwait / 100);
-		if(mot>2)mot = 1;
-		for(var i = 0; i < 19; i++){
-			for(var j = 0; j < 17; j++){
-				var pos = drawMapLimitCheck(mx,my);
-				mx = pos.mx;
-				my = pos.my;
-				var xx = mx + i;
-				var yy = my + j;
-				if(emap[xx][yy]!=-1){
-					posx = i*25+sx-2;
-					posy = j*25+sy-15;
-					ctx.drawImage(Enemy[emap[xx][yy]].img,20*mot,0,20,28,posx,posy,28,38);
-				}
-			}
-		}
-	}
-	*/
-
 	function drawMoveEnemy(xx,yy,x,y){
 		var mot = Math.floor(MainChara.mwait / 100);
 		if(mot>2)mot = 1;
@@ -636,13 +493,6 @@
 			}
 		}
 	}
-
-
-
-
-
-
-
 
 	function moveChar(mx,my,dir){
 		if(canMove(mx,my)){
@@ -686,13 +536,14 @@
 		return v;
 	}
 
+	//未実装
 	function moveEnemy(){
 		for(var i = 0; i < 15; i++){
 
 		}
 	}
 
-	function drawMap(){
+	function drawCalc(){
 		var ax = 155;
 		var ay = 80;
 		ctx.fillStyle = '#070';
@@ -704,28 +555,41 @@
 		var cy = MainChara.y | 0;
 		var mx = cx - 9;
 		var my = cy - 8;
+		var pos = drawMapLimitCheck(mx,my);
 		for(var i = 0; i < 19; i++){
 			for(var j = 0; j < 17; j++){
-				var pos = drawMapLimitCheck(mx,my);
-				mx = pos.mx;
-				my = pos.my;
-				var xx = mx + i;
-				var yy = my + j;
-				if(cx == xx && cy == yy){
-					ctx.fillStyle = '#a00';
-					ctx.drawImage(map_chip,0,0,32,32,i*25+sx,j*25+sy,24,24);
-				}else if(map[xx][yy]){
-					ctx.fillStyle = '#a0a';
-					ctx.drawImage(map_chip,0,0,32,32,i*25+sx,j*25+sy,24,24);
-				}else{
-					ctx.fillStyle = '#aa0';
-					ctx.drawImage(map_chip,0,0,32,32,i*25+sx,j*25+sy,24,24);
-					ctx.drawImage(map_chip,224,0,32,32,i*25+sx,j*25+sy,24,24);
-				}
-				//ctx.fillRect(i*25+sx,j*25+sy,24,24);
+				var xx = pos.mx + i;
+				var yy = pos.my + j;
+				//タイル描画
+				drawMap(xx,yy,i*25+sx,j*25+sy);
 			}
 		}
 
+		for(var i = 0; i < 19; i++){
+			for(var j = 0; j < 17; j++){
+				var xx = pos.mx + i;
+				var yy = pos.my + j;
+
+				//chara,enemy描画
+				if(emap[xx][yy] != -1){
+					drawEnemy(xx,yy,i*25+sx-2,j*25+sy-15);
+				}
+				if(cx == xx && cy == yy){
+					drawChar(i*25+sx-2,j*25+sy-15);
+				}
+			}
+		}
+	}
+
+	function drawMap(r,c,x,y){
+		if(map[r][c]){
+			ctx.fillStyle = '#a0a';
+			ctx.drawImage(map_chip,0,0,32,32,x,y,24,24);
+		}else{
+			ctx.fillStyle = '#aa0';
+			ctx.drawImage(map_chip,0,0,32,32,x,y,24,24);
+			ctx.drawImage(map_chip,224,0,32,32,x,y,24,24);
+		}
 	}
 
 	function drawMapLimitCheck(mx,my){
@@ -749,74 +613,33 @@
 		ctx.fillRect(ax+645,25,125,560);
 	}
 
-	function drawChar(){
+	function drawChar(x,y){
 		var dir = MainChara.dir;
-
-		var posx = 0, posy = 0;
-		var sx = 165;
-		var sy = 35;
-		var cx = MainChara.x | 0;
-		var cy = MainChara.y | 0;
-		var mx = cx - 9;
-		var my = cy - 8;
-		for(var i = 0; i < 19; i++){
-			for(var j = 0; j < 17; j++){
-				var pos = drawMapLimitCheck(mx,my);
-				mx = pos.mx;
-				my = pos.my;
-				var xx = mx + i;
-				var yy = my + j;
-				if(cx == xx && cy == yy){
-					posx = i*25+sx-2;
-					posy = j*25+sy-15;
-					break;
-				}
-			}
-		}
 		var mot = Math.floor(MainChara.mwait / 100);
 		if(mot>2)mot = 1;
 		switch(dir){
 			case 2 : //down
-				ctx.drawImage(MainChara.img,20*mot,0,20,28,posx,posy,28,38);
+				ctx.drawImage(MainChara.img,20*mot,0,20,28,x,y,28,38);
 				break;
 			case 4 : //left
-				ctx.drawImage(MainChara.img,20*mot,28,20,28,posx,posy,28,38);
+				ctx.drawImage(MainChara.img,20*mot,28,20,28,x,y,28,38);
 				break;
 			case 6 : //right
-				ctx.drawImage(MainChara.img,20*mot,56,20,28,posx,posy,28,38);
+				ctx.drawImage(MainChara.img,20*mot,56,20,28,x,y,28,38);
 				break;
 			case 8 : //up
-				ctx.drawImage(MainChara.img,20*mot,84,20,28,posx,posy,28,38);
+				ctx.drawImage(MainChara.img,20*mot,84,20,28,x,y,28,38);
 				break;
 		}
 	}
 
-	function drawEnemy(){
-		var posx = 0, posy = 0;
-		var sx = 165;
-		var sy = 35;
-		var cx = MainChara.x | 0;
-		var cy = MainChara.y | 0;
-		var mx = cx - 9;
-		var my = cy - 8;
+	function drawEnemy(xx,yy,x,y){
 		var mot = Math.floor(MainChara.mwait / 100);
 		if(mot>2)mot = 1;
-		for(var i = 0; i < 19; i++){
-			for(var j = 0; j < 17; j++){
-				var pos = drawMapLimitCheck(mx,my);
-				mx = pos.mx;
-				my = pos.my;
-				var xx = mx + i;
-				var yy = my + j;
-				if(emap[xx][yy]!=-1){
-					posx = i*25+sx-2;
-					posy = j*25+sy-15;
-					ctx.drawImage(Enemy[emap[xx][yy]].img,20*mot,0,20,28,posx,posy,28,38);
-				}
-			}
-		}
+		ctx.drawImage(Enemy[emap[xx][yy]].img,20*mot,0,20,28,x,y,28,38);
 	}
 
+	//生存enemyの更新
 	function scanEnemyPos(){
 		for(var i = 0; i < row; i++){
 			for(var j = 0; j < col; j++){
@@ -844,7 +667,6 @@
 			Enemy[emap[tx][ty]].exist = false;
 		}
 		scanEnemyPos();
-
 	}
 
 	function onClick(e){
@@ -867,32 +689,25 @@
 		if(move_now!=-1)return 0;
 		on_key[key] = true;
 		
-		if(on_key[65]){
-			//a
+		if(on_key[65]){	//a
 			moveChar(-1,0,4);
 			modCharDir(4);
 		}
-		if(on_key[83]){
-			//s
+		if(on_key[83]){	//s
 			moveChar(0,1,2);
 			modCharDir(2);
 		}
-		if(on_key[68]){
-			//d
+		if(on_key[68]){	//d
 			moveChar(1,0,6);
 			modCharDir(6);
 		}
-		if(on_key[87]){
-			//w
+		if(on_key[87]){	//w
 			moveChar(0,-1,8);
 			modCharDir(8);
 		}
-		if(on_key[13]){
-			//enter
+		if(on_key[13]){	//enter
 			attack();
 		}
-		
-
 	};
 
 	document.onkeyup = function (e){
