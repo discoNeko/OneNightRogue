@@ -255,28 +255,37 @@
 /*
 	function onKeyCheck(){
 		//a
-		if(on_key[65] && !on_key_done[65]){
-			on_key_done[65] = true;
+		if(on_key[65]){
 			moveChar(-1,0);
+			modCharDir(4);
+			on_key[65] = false;
 		}
 		//s
-		if(on_key[83] && !on_key_done[83]){
-			on_key_done[83] = true;
+		if(on_key[83]){
 			moveChar(0,1);
+			modCharDir(2);
+			on_key[83] = false;
 		}
 		//d
-		if(on_key[68] && !on_key_done[68]){
-			on_key_done[68] = true;
+		if(on_key[68]){
 			moveChar(1,0);
+			modCharDir(6);
+			on_key[68] = false;
 		}
 		//w
-		if(on_key[87] && !on_key_done[87]){
-			on_key_done[87] = true;
+		if(on_key[87]){
 			moveChar(0,-1);
+			modCharDir(8);
+			on_key[87] = false;
+		}
+		//enter
+		if(on_key[13]){
+			attack();
+			on_key[13] = false;
 		}
 	}
-*/
 
+*/
 
 /*
 
@@ -350,9 +359,10 @@
 		//補正値
 		//var hx = dd*dx[d];
 		//var hy = dd*dy[d];
+		var pos = drawMoveMapLimitCheck(mx,my);
 		for(var i = 0; i < 21; i++){
 			for(var j = 0; j < 19; j++){
-				var pos = drawMoveMapLimitCheck(mx,my);
+				//var pos = drawMoveMapLimitCheck(mx,my);
 				//mx = pos.mx;
 				//my = pos.my;
 				//var xx = mx + i;
@@ -375,6 +385,17 @@
 					hj = j-1;
 					hy = dd*dy[d];
 				}
+
+				//画面端 -> 中央へ移動時 hit判定を解除する
+				var dir = MainChara.dir;
+				if(dir==2 && MainChara.y==8)
+					hy = dd*dy[d];
+				if(dir==4 && MainChara.x==40)
+					hx = dd*dx[d];
+				if(dir==6 && MainChara.x==9)
+					hx = dd*dx[d];
+				if(dir==8 && MainChara.y==41)
+					hy = dd*dy[d];
 				drawMoveMap(xx,yy,hi*25+sx+hx,hj*25+sy+hy);
 				//ループの最初と最後はタイルが見切れるので、補正を入れる
 			}
@@ -385,7 +406,7 @@
 		//タイルを移動させずにcharaを移動させる
 		for(var i = 0; i < 21; i++){
 			for(var j = 0; j < 19; j++){
-				var pos = drawMoveMapLimitCheck(mx,my);
+				//var pos = drawMoveMapLimitCheck(mx,my);
 				//mx = pos.mx;
 				//my = pos.my;
 				//var xx = mx + i;
@@ -412,6 +433,26 @@
 					hy = dd*dy[d];
 					chy = 0;
 				}
+
+				//画面端 -> 中央へ移動時 hit判定を解除する
+				var dir = MainChara.dir;
+				if(dir==2 && MainChara.y==8){
+					hy = dd*dy[d];
+					chy = 0;
+				}
+				if(dir==4 && MainChara.x==40){
+					hx = dd*dx[d];
+					chx = 0;
+				}
+				if(dir==6 && MainChara.x==9){
+					hx = dd*dx[d];
+					chx = 0;
+				}
+				if(dir==8 && MainChara.y==41){
+					hy = dd*dy[d];
+					chy = 0;
+				}
+
 				if(emap[xx][yy] != -1){
 					drawMoveEnemy(xx,yy,hi*25+sx-2+hx,hj*25+sy-15+hy);
 				}
@@ -420,6 +461,27 @@
 				}
 			}
 		}
+
+		//枠線上書き
+		ctx.fillStyle = '#070';
+		ctx.fillRect(155,25,495,10);
+		ctx.fillRect(155,25,10,445);
+		ctx.fillRect(640,25,10,445);
+		ctx.fillRect(155,460,495,10);
+
+		ctx.fillStyle = '#222';
+		ctx.fillRect(0,0,155,600);
+		ctx.fillRect(0,0,800,25);
+		ctx.fillRect(0,470,800,130);
+		ctx.fillRect(650,0,150,600);
+
+		ctx.fillStyle = '#aaa';
+		ctx.fillRect(0,0,5,600);
+		ctx.fillRect(0,0,800,5);
+		ctx.fillRect(0,595,800,5);
+		ctx.fillRect(795,0,5,600);
+		
+
 	}
 
 	function drawMoveMapLimitCheck(mx,my){
@@ -802,7 +864,9 @@
 	document.onkeydown = function (e){
 		var key = e.keyCode;
 		console.log(key);
+		if(move_now!=-1)return 0;
 		on_key[key] = true;
+		
 		if(on_key[65]){
 			//a
 			moveChar(-1,0,4);
@@ -827,6 +891,7 @@
 			//enter
 			attack();
 		}
+		
 
 	};
 
