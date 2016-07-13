@@ -69,45 +69,109 @@
 		}
 	}
 
+	function genRoom(sx,sy,gx,gy,skip){
+		var v;
+		var ssx = [], ssy = [];
+		var r = [], c = [];
+		for(var i = 0; i < 4; i++){
+			r[i] = Math.floor(Math.random()*10)+1;
+			c[i] = Math.floor(Math.random()*10)+1;
+		}
+
+		//set position
+		ssx[0] = sx - r[0];
+		while(true){
+			ssx[1] = Math.floor(Math.random()*row);
+			if((ssx[1]>=sx && ssx[1]<gx) || (ssx[1]+r[1]>=sx && ssx[1]+r[1]<gx))
+				break;
+		}
+		ssx[2] = gx;
+		while(true){
+			ssx[3] = Math.floor(Math.random()*row);
+			if((ssx[3]>=sx && ssx[3]<gx) || (ssx[3]+r[3]>=sx && ssx[3]+r[3]<gx))
+				break;
+		}
+
+		while(true){
+			ssy[0] = Math.floor(Math.random()*row);
+			if((ssy[0]>=sy && ssy[0]<gy) || (ssy[0]+c[0]>=sy && ssy[0]+c[0]<gy))
+				break;
+		}
+		ssy[1] = sy - c[1];
+		while(true){
+			ssy[2] = Math.floor(Math.random()*row);
+			if((ssy[2]>=sy && ssy[2]<gy) || (ssy[2]+c[2]>=sy && ssy[2]+c[2]<gy))
+				break;
+		}
+		ssy[3] = gy;
+
+		for(var i = 0; i < 4; i++){
+			if(skip==i)continue;
+			v = true;
+			var s1 = ssx[i], g1 = ssx[i] + r[i];
+			var s2 = ssy[i], g2 = ssy[i] + c[i];
+			for(var j = s1; j < g1; j++){
+				for(var k = s2; k < g2; k++){
+					if(-1<j && j<row && -1<k && k<col && !map[j][k]){
+						map[j][k] = true;
+					}else{
+						v = false;
+						j=g1;
+						break;
+					}
+				}
+			}
+			if(v)genRoom(s1,s2,g1,g2,i);
+		}
+	}
+
+	//random map生成
 	function setMapRandom(){
 		for(var i = 0; i < row; i++){
 			map[i] = [];
 		}
 
-		var r = Math.floor(Math.random()*30+10);
-		var c = Math.floor(Math.random()*30+10);
-		genSpace(0,0,r,c);
-		genSpace(r,0,row,c);
-		genSpace(0,c,r,col);
-		genSpace(r,c,row,col);
-		
-
-		/*
-		for(var i = 0; i < row; i++){
-			for(var j = 0; j < col; j++){
-				map[i][j] = true;
-			}	
-		}
-		*/
-		requestId = window.requestAnimationFrame(renderTitle); 
-	}
-
-	//mapランダム生成
-	function genSpace(sx,sy,gx,gy){
-		if(sx<5)sx+=5;
-		if(sy<5)sy+=5;
-		if(gx>row-5)gx-=5;
-		if(gy>col-5)gy-=5;
-		var dx = gx - sx;
-		var dy = gy - sy;
-		var r = Math.floor(Math.random()*dx)+sx+5;
-		var c = Math.floor(Math.random()*dy)+sy+5;
-		for(var i = sx; i < r; i++){
-			for(var j = sy; j < c; j++){
-				console.log(i+" "+j);
+		var sx = Math.floor(Math.random()*10)+row/2;
+		var sy = Math.floor(Math.random()*10)+col/2;
+		var gx = Math.floor(Math.random()*10)+1+sx;
+		var gy = Math.floor(Math.random()*10)+1+sy;
+		for(var i = sx; i < gx; i++){
+			for(var j = sy; j < gy; j++){
 				map[i][j] = true;
 			}
 		}
+		genRoom(sx,sy,gx,gy,-1);
+		for(var i = 0; i < row; i++){
+			map[i][0] = false;
+			map[0][i] = false;
+			map[i][col-1] = false;
+			map[row-1][i] = false;
+		}
+
+		//chara set
+		while(true){
+			var x = Math.floor(Math.random()*row);
+			var y = Math.floor(Math.random()*col);
+			if(map[x][y]){
+				MainChara.x = x;
+				MainChara.y = y;
+				break;
+			}
+		}
+
+		for(var i = 0; i < row; i++){
+			var s = "";
+			for(var j = 0; j < col; j++){
+				if(map[i][j]){
+					s += "O";
+				}else{
+					s += "■";
+				}
+			}
+			console.log(s);
+		}
+		
+		requestId = window.requestAnimationFrame(renderTitle); 
 	}
 
 	function loadCSV(){
