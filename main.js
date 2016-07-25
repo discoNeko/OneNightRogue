@@ -1,9 +1,20 @@
 (function(){
+	//game display num
 	var w = 800, h = 600;
 	var requestId;
 	var floor = 0;
 	var hunt = 0;
 	var dig = 0;
+
+	//game static num
+	var mROW = 100;//map mass size x
+	var mCOL = 100;//map mass size y
+
+	var dROW = mROW * 25;//map dot size x
+	var dCOL = mCOL * 25;//map dot size y
+
+	var m_map = [];
+	var d_map = [];
 
 	var map_chip = new Image();
 	map_chip.src = 'img/map.png';
@@ -43,8 +54,7 @@
 
 	var move_now = -1;
 
-	var row = 50;
-	var col = 50;
+
 	var map = [];
 	var imap = [];
 	var on_key = [];
@@ -74,9 +84,9 @@
 	}
 
 	function setMapEnemy(){
-		for(var i = 0; i < row; i++){
+		for(var i = 0; i < mROW; i++){
 			emap[i] = [];
-			for(var j = 0; j < col; j++){
+			for(var j = 0; j < mCOL; j++){
 				emap[i][j] = -1;
 			}
 		}
@@ -94,25 +104,25 @@
 		//set position
 		ssx[0] = sx - r[0];
 		while(true){
-			ssx[1] = Math.floor(Math.random()*row);
+			ssx[1] = Math.floor(Math.random()*mROW);
 			if((ssx[1]>=sx && ssx[1]<gx) || (ssx[1]+r[1]>=sx && ssx[1]+r[1]<gx))
 				break;
 		}
 		ssx[2] = gx;
 		while(true){
-			ssx[3] = Math.floor(Math.random()*row);
+			ssx[3] = Math.floor(Math.random()*mROW);
 			if((ssx[3]>=sx && ssx[3]<gx) || (ssx[3]+r[3]>=sx && ssx[3]+r[3]<gx))
 				break;
 		}
 
 		while(true){
-			ssy[0] = Math.floor(Math.random()*row);
+			ssy[0] = Math.floor(Math.random()*mROW);
 			if((ssy[0]>=sy && ssy[0]<gy) || (ssy[0]+c[0]>=sy && ssy[0]+c[0]<gy))
 				break;
 		}
 		ssy[1] = sy - c[1];
 		while(true){
-			ssy[2] = Math.floor(Math.random()*row);
+			ssy[2] = Math.floor(Math.random()*mROW);
 			if((ssy[2]>=sy && ssy[2]<gy) || (ssy[2]+c[2]>=sy && ssy[2]+c[2]<gy))
 				break;
 		}
@@ -125,7 +135,7 @@
 			var s2 = ssy[i], g2 = ssy[i] + c[i];
 			for(var j = s1; j < g1; j++){
 				for(var k = s2; k < g2; k++){
-					if(-1<j && j<row && -1<k && k<col && !map[j][k]){
+					if(-1<j && j<mROW && -1<k && k<mCOL && !map[j][k]){
 						map[j][k] = true;
 					}else{
 						v = false;
@@ -140,13 +150,13 @@
 
 	//random map生成
 	function setMapRandom(){
-		for(var i = 0; i < row; i++){
+		for(var i = 0; i < mROW; i++){
 			map[i] = [];
 			imap[i] = [];
 		}
 
-		var sx = Math.floor(Math.random()*10)+row/2;
-		var sy = Math.floor(Math.random()*10)+col/2;
+		var sx = Math.floor(Math.random()*10)+mROW/2;
+		var sy = Math.floor(Math.random()*10)+mCOL/2;
 		var gx = Math.floor(Math.random()*10)+1+sx;
 		var gy = Math.floor(Math.random()*10)+1+sy;
 		for(var i = sx; i < gx; i++){
@@ -155,17 +165,17 @@
 			}
 		}
 		genRoom(sx,sy,gx,gy,-1);
-		for(var i = 0; i < row; i++){
+		for(var i = 0; i < mROW; i++){
 			map[i][0] = false;
 			map[0][i] = false;
-			map[i][col-1] = false;
-			map[row-1][i] = false;
+			map[i][mCOL-1] = false;
+			map[mROW-1][i] = false;
 		}
 
 		//chara set
 		while(true){
-			var x = Math.floor(Math.random()*row);
-			var y = Math.floor(Math.random()*col);
+			var x = Math.floor(Math.random()*mROW);
+			var y = Math.floor(Math.random()*mCOL);
 			if(map[x][y]){
 				MainChara.x = x;
 				MainChara.y = y;
@@ -173,9 +183,9 @@
 			}
 		}
 
-		for(var i = 0; i < row; i++){
+		for(var i = 0; i < mROW; i++){
 			var s = "";
-			for(var j = 0; j < col; j++){
+			for(var j = 0; j < mCOL; j++){
 				if(map[i][j]){
 					s += "O";
 				}else{
@@ -189,16 +199,16 @@
 	}
 
 	function setItem(){
-		for(var i = 0; i < row; i++){
-			for(var j = 0; j < col; j++){
+		for(var i = 0; i < mROW; i++){
+			for(var j = 0; j < mCOL; j++){
 				imap[i][j] = -1;
 			}
 		}
 
 		var num = Math.floor(Math.random()*20)+10;
 		while(num>0){
-			var x = Math.floor(Math.random()*row);
-			var y = Math.floor(Math.random()*col);
+			var x = Math.floor(Math.random()*mROW);
+			var y = Math.floor(Math.random()*mCOL);
 			if(map[x][y] && emap[x][y]==-1)
 				imap[x][y] = Math.floor(Math.random()*5);
 			num--;
@@ -219,30 +229,16 @@
 
 	function setMap(data){
 		var dmap = [];
-		for(var i = 0; i < row; i++){
+		for(var i = 0; i < mROW; i++){
 			map[i] = [];
 			dmap[i] = data[i].split(',');
 		}
-		for(var i = 0; i < row; i++){
-			for(var j = 0; j < col; j++){
+		for(var i = 0; i < mROW; i++){
+			for(var j = 0; j < mCOL; j++){
 				if(dmap[j][i]==0)
 					map[i][j]=true;
 			}
 		}
-		/*
-		//map確認
-		for(var i = 0; i < row; i++){
-			var s = "";
-			for(var j = 0; j < col; j++){
-				if(map[i][j]){
-					s += "O";
-				}else{
-					s += "X";
-				}
-			}
-			console.log(s);
-		}
-		*/
 		requestId = window.requestAnimationFrame(renderTitle); 
 	}
 
@@ -252,8 +248,8 @@
 			Enemy[i] = new Chara();
 			Enemy[i].img.src = 'img/2.png';
 			while(true){
-				var x = Math.floor(Math.random()*row);
-				var y = Math.floor(Math.random()*col);
+				var x = Math.floor(Math.random()*mROW);
+				var y = Math.floor(Math.random()*mCOL);
 				if(emap[x][y]==-1){
 					Enemy[i].x = x;
 					Enemy[i].y = y;
@@ -267,15 +263,15 @@
 	}
 
 	function resetEnemy(){
-		for(var i = 0; i < row; i++){
-			for(var j = 0; j < col; j++){
+		for(var i = 0; i < mROW; i++){
+			for(var j = 0; j < mCOL; j++){
 				emap[i][j] = -1;
 			}
 		}
 		for(var i = 0; i < e_num; i++){
 			while(true){
-				var x = Math.floor(Math.random()*row);
-				var y = Math.floor(Math.random()*col);
+				var x = Math.floor(Math.random()*mROW);
+				var y = Math.floor(Math.random()*mCOL);
 				if(emap[x][y]==-1){
 					Enemy[i].x = x;
 					Enemy[i].y = y;
@@ -375,7 +371,7 @@
 			MainChara.mwait = 0;
 	}
 
-/*
+
 	function onKeyCheck(){
 		//a
 		if(on_key[65]){
@@ -408,7 +404,6 @@
 		}
 	}
 
-*/
 
 	//移動中の滑らかな移動を描画
 	//描画位置を一括で計算して、map,chara,enemyそれぞれに値を渡す
@@ -456,11 +451,11 @@
 				var dir = MainChara.dir;
 				if(dir==2 && MainChara.y==8)
 					hy = dd*dy[d];
-				if(dir==4 && MainChara.x==40)
+				if(dir==4 && MainChara.x==mROW-10)
 					hx = dd*dx[d];
 				if(dir==6 && MainChara.x==9)
 					hx = dd*dx[d];
-				if(dir==8 && MainChara.y==41)
+				if(dir==8 && MainChara.y==mCOL-9)
 					hy = dd*dy[d];
 
 				//タイル描画
@@ -503,7 +498,7 @@
 					hy = dd*dy[d];
 					chy = 0;
 				}
-				if(dir==4 && MainChara.x==40){
+				if(dir==4 && MainChara.x==mROW-10){
 					hx = dd*dx[d];
 					chx = 0;
 				}
@@ -511,7 +506,7 @@
 					hx = dd*dx[d];
 					chx = 0;
 				}
-				if(dir==8 && MainChara.y==41){
+				if(dir==8 && MainChara.y==mCOL-9){
 					hy = dd*dy[d];
 					chy = 0;
 				}
@@ -555,16 +550,16 @@
 			mx = 0;
 			xhit = -1;
 		}
-		if(mx + 21 > 50){
-			mx = 29;
+		if(mx + 21 > mROW){
+			mx = mROW - 21;
 			xhit = 1;
 		}
 		if(my < 0){
 			my = 0;
 			yhit = -1;
 		}
-		if(my + 19 > 50){
-			my = 31;
+		if(my + 19 > mCOL){
+			my = mCOL - 19;
 			yhit = 1;
 		}
 		return {mx,my,xhit,yhit};
@@ -667,10 +662,10 @@
 		var xx = MainChara.x + mx;
 		var yy = MainChara.y + my;
 		console.log("move "+xx+" "+yy);
-		if(mx!=0 && (0>xx || xx>row-1)){
+		if(mx!=0 && (0>xx || xx>mROW-1)){
 			return false;
 		}
-		if(my!=0 && (0>yy || yy>col-1)){
+		if(my!=0 && (0>yy || yy>mCOL-1)){
 			return false;
 		}
 		if(collisionEnemy(xx,yy)){
@@ -784,12 +779,12 @@
 	function drawMapLimitCheck(mx,my){
 		if(mx < 0)
 			mx = 0;
-		if(mx + 19 > 50)
-			mx = 31;
+		if(mx + 19 > mROW)
+			mx = mROW - 19;
 		if(my < 0)
 			my = 0;
-		if(my + 17 > 50)
-			my = 33;
+		if(my + 17 > mCOL)
+			my = mCOL - 17;
 		return {mx,my};
 	}
 
@@ -824,12 +819,17 @@
 			ctx.fillText(message[i],20,578-i*20);
 		}
 
-		ctx.fillStyle = '#999';
 		var sx = 30, sy = 350;
-		for(var i = 0; i < row; i++){
-			for(var j = 0; j < col; j++){
+		ctx.fillStyle = '#577';
+		ctx.fillRect(sx,sy,mROW,1);
+		ctx.fillRect(sx,sy,1,mCOL);
+		ctx.fillRect(sx+mROW,sy,1,mCOL);
+		ctx.fillRect(sx,sy+mCOL,mROW+1,1);
+		ctx.fillStyle = '#999';
+		for(var i = 0; i < mROW; i++){
+			for(var j = 0; j < mCOL; j++){
 				if(map[i][j]){
-					ctx.fillRect(sx+i*2,sy+j*2,2,2);
+					ctx.fillRect(sx+i,sy+j,1,1);
 				}else{
 					//ctx.fillRect(sx+i*2,sy+j*2,2,2);
 				}
@@ -837,12 +837,12 @@
 		}
 		if(floor<2){
 			ctx.fillStyle = '#a33';
-			ctx.fillRect(sx+MainChara.x*2-2,sy+MainChara.y*2-2,4,4);
+			ctx.fillRect(sx+MainChara.x-2,sy+MainChara.y-2,4,4);
 		}
 		if(floor<4){
 			ctx.fillStyle = '#3a3';
 			ctx.globalAlpha = MainChara.mwait%100/100;
-			ctx.fillRect(sx+Enemy[0].x*2-2,sy+Enemy[0].y*2-2,4,4);
+			ctx.fillRect(sx+Enemy[0].x-2,sy+Enemy[0].y-2,4,4);
 			ctx.globalAlpha = 1.0;
 		}
 	}
@@ -875,8 +875,8 @@
 
 	//生存enemyの更新
 	function scanEnemyPos(){
-		for(var i = 0; i < row; i++){
-			for(var j = 0; j < col; j++){
+		for(var i = 0; i < mROW; i++){
+			for(var j = 0; j < mCOL; j++){
 				emap[i][j] = -1;
 			}
 		}
@@ -897,7 +897,7 @@
 			case 8 : ty--; break;
 		}
 		//exception対策
-		if(-1<tx && tx<row && -1<ty && ty<col){
+		if(-1<tx && tx<mROW && -1<ty && ty<mCOL){
 			if(emap[tx][ty]!=-1 && MainChara.mn>4){
 				//attack
 				appEffect();
