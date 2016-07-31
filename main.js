@@ -9,12 +9,13 @@
 	//game static num
 	var mROW = 100;//map mass size x
 	var mCOL = 100;//map mass size y
+	var mSIZE = 25;//mass size
 
-	var dROW = mROW * 25;//map dot size x
-	var dCOL = mCOL * 25;//map dot size y
+	var dROW = mROW * mSIZE;//map dot size x
+	var dCOL = mCOL * mSIZE;//map dot size y
 
-	var m_map = [];
-	var d_map = [];
+	var mMap = [];
+	var dMap = [];
 
 	var map_chip = new Image();
 	map_chip.src = 'img/map.png';
@@ -32,8 +33,8 @@
 	var eff = [];
 
 	var Chara = function (){
-		this.x = 9;
-		this.y = 12;
+		this.x = -1;
+		this.y = -1;
 		this.dir = 2;
 		this.hp = 100;
 		this.mn = 80;
@@ -44,8 +45,9 @@
 		this.img.src = 'img/1.png';
 		this.mwait = 0;
 	}
+
 	var MainChara = new Chara();
-	var e_num = 150;
+	var e_num = 1;
 	var Enemy = [];
 
 	var emap = [];
@@ -177,11 +179,17 @@
 			var x = Math.floor(Math.random()*mROW);
 			var y = Math.floor(Math.random()*mCOL);
 			if(map[x][y]){
-				MainChara.x = x;
-				MainChara.y = y;
+				MainChara.x = x*mSIZE;
+				MainChara.y = y*mSIZE;
 				break;
 			}
 		}
+		//debug	
+		/*
+		map[80][0] = true;
+		MainChara.x = 80*25;
+		MainChara.y = 0;
+		*/
 
 		for(var i = 0; i < mROW; i++){
 			var s = "";
@@ -344,14 +352,18 @@
 		//frame count
 		motionChar();
 
-		//onKeyCheck();
+		onKeyCheck();
+		drawMoveCalc();
+
+		//drawCalc();
+		/*
 		if(move_now!=-1){
 			drawMoveCalc();
 			moveDoneCheck();
 		}else{
 			drawCalc();
 		}
-
+		*/
 		drawMenu();
 
 		if(MainChara.hp<1){
@@ -366,7 +378,7 @@
 	}
 
 	function motionChar(){
-		MainChara.mwait+=2;
+		MainChara.mwait+=3;
 		if(MainChara.mwait>400)
 			MainChara.mwait = 0;
 	}
@@ -377,25 +389,21 @@
 		if(on_key[65]){
 			moveChar(-1,0);
 			modCharDir(4);
-			on_key[65] = false;
 		}
 		//s
 		if(on_key[83]){
 			moveChar(0,1);
 			modCharDir(2);
-			on_key[83] = false;
 		}
 		//d
 		if(on_key[68]){
 			moveChar(1,0);
 			modCharDir(6);
-			on_key[68] = false;
 		}
 		//w
 		if(on_key[87]){
 			moveChar(0,-1);
 			modCharDir(8);
-			on_key[87] = false;
 		}
 		//enter
 		if(on_key[13]){
@@ -404,174 +412,126 @@
 		}
 	}
 
-
-	//移動中の滑らかな移動を描画
-	//描画位置を一括で計算して、map,chara,enemyそれぞれに値を渡す
 	function drawMoveCalc(){
-		move_now += 25;
-		var dd = Math.floor(24*move_now/100);
+		//MainChara の向き
 		var d = Math.floor(MainChara.dir/2) - 1;
 		var dx = [0,1,-1,0];
 		var dy = [-1,0,0,1];
 
+		//main frame の背景色描画
 		var ax = 155;
 		var ay = 80;
 		ctx.fillStyle = '#070';
 		ctx.fillRect(ax,ay-55,w-2*ax+5,h-2*ay+5);
 
+		//タイル描画開始位置
 		var sx = 165;
 		var sy = 35;
-		var cx = MainChara.x | 0;
-		var cy = MainChara.y | 0;
+		//MainChara の位置
+		var cx = Math.floor(MainChara.x / 25);
+		var cy = Math.floor(MainChara.y / 25);
+		var bx = Math.floor(MainChara.x % 25);
+		var by = Math.floor(MainChara.y % 25);
+		//console.log(bx+" "+by);
+		//表示限界　mass
 		var mx = cx - 10;
 		var my = cy - 9;
-		var pos = drawMoveMapLimitCheck(mx,my);
-		for(var i = 0; i < 21; i++){
-			for(var j = 0; j < 19; j++){
-				var xx = pos.mx + i;
-				var yy = pos.my + j;
-				//補正値　タイルの描画開始位置
-				var hi = i, hj = j;
-				//補正値 タイルが動く場合
-				var hx = 0, hy = 0;
-				if(pos.xhit==1){
-					hi = i-2;
-				}else if(pos.xhit==0){
-					hi = i-1;
-					hx = dd*dx[d];
-				}
-				if(pos.yhit==1){
-					hj = j-2;
-				}else if(pos.yhit==0){
-					hj = j-1;
-					hy = dd*dy[d];
-				}
-
-				//画面端 -> 中央へ移動時 hit判定を解除する
-				var dir = MainChara.dir;
-				if(dir==2 && MainChara.y==8)
-					hy = dd*dy[d];
-				if(dir==4 && MainChara.x==mROW-10)
-					hx = dd*dx[d];
-				if(dir==6 && MainChara.x==9)
-					hx = dd*dx[d];
-				if(dir==8 && MainChara.y==mCOL-9)
-					hy = dd*dy[d];
-
-				//タイル描画
-				drawMoveMap(xx,yy,hi*25+sx+hx,hj*25+sy+hy);
-				//ループの最初と最後はタイルが見切れるので、補正を入れる
-			}
-		}
-
-		//タイル描画後にchara,enemyを描画
-		//charaが画面端に寄っているときは、
-		//タイルを移動させずにcharaを移動させる
-		for(var i = 0; i < 21; i++){
-			for(var j = 0; j < 19; j++){
-				var xx = pos.mx + i;
-				var yy = pos.my + j;
-				//補正値　タイルの描画開始位置
-				var hi = i, hj = j;
-				//補正値 タイルが動く場合
-				var hx = 0, hy = 0;
-				//補正値 charaが動く場合
-				var chx = dd*dx[d], chy = dd*dy[d];
-				if(pos.xhit==1){
-					hi = i-2;
-				}else if(pos.xhit==0){
-					hi = i-1;
-					hx = dd*dx[d];
-					chx = 0;
-				}
-				if(pos.yhit==1){
-					hj = j-2;
-				}else if(pos.yhit==0){
-					hj = j-1;
-					hy = dd*dy[d];
-					chy = 0;
-				}
-
-				//画面端 -> 中央へ移動時 hit判定を解除する
-				var dir = MainChara.dir;
-				if(dir==2 && MainChara.y==8){
-					hy = dd*dy[d];
-					chy = 0;
-				}
-				if(dir==4 && MainChara.x==mROW-10){
-					hx = dd*dx[d];
-					chx = 0;
-				}
-				if(dir==6 && MainChara.x==9){
-					hx = dd*dx[d];
-					chx = 0;
-				}
-				if(dir==8 && MainChara.y==mCOL-9){
-					hy = dd*dy[d];
-					chy = 0;
-				}
-
-				//chara,enemy描画
-				if(emap[xx][yy] != -1){
-					drawMoveEnemy(xx,yy,hi*25+sx-2+hx,hj*25+sy-15+hy);
-				}
-				if(cx == xx && cy == yy){
-					drawMoveChar(hi*25+sx-2-chx,hj*25+sy-15-chy);
-				}
-			}
-		}
-
-		//枠線上書き
-		ctx.fillStyle = '#070';
-		ctx.fillRect(155,25,495,10);
-		ctx.fillRect(155,25,10,445);
-		ctx.fillRect(640,25,10,445);
-		ctx.fillRect(155,460,495,10);
-
-		ctx.fillStyle = '#222';
-		ctx.fillRect(0,0,155,600);
-		ctx.fillRect(0,0,800,25);
-		ctx.fillRect(0,470,800,130);
-		ctx.fillRect(650,0,150,600);
-
-		ctx.fillStyle = '#aaa';
-		ctx.fillRect(0,0,5,600);
-		ctx.fillRect(0,0,800,5);
-		ctx.fillRect(0,595,800,5);
-		ctx.fillRect(795,0,5,600);
+		//以下の関数で描画
 		
+		//context の保存
+		ctx.save();
+		//描画範囲はクリッピングマスクで領域内に抑えられている
+		ctx.beginPath();
+		ctx.rect(sx,sy,19*mSIZE,17*mSIZE);
+		ctx.clip();
 
+		//マップ端補正値の判定
+		var pos = drawMoveMapLimitCheck(mx,my);
+		//chip表示位置の補正値
+		var chip_x = bx;
+		var chip_y = by;
+		//画面端なら　chip　の表示位置を固定する
+		//pos.xhit = -1 : 左端
+		//pos.xhit =  0 : 中央
+		//pos.xhit =  1 : 右端
+		if(pos.xhit==-1){
+			chip_x = 0;
+		}else if(pos.xhit==1){
+			chip_x = 25;
+		}
+		if(pos.yhit==-1){
+			chip_y = 0;
+		}else if(pos.yhit==1){
+			chip_y = 25;
+		}
+		for(var i = 0; i < 20; i++){
+			for(var j = 0; j < 18; j++){
+				//xx,yy : chip座標
+				var xx = pos.mx + i;
+				var yy = pos.my + j;
+				drawMoveMap(xx,yy,sx+i*25-chip_x,sy+j*25-chip_y);
+			}
+		}
+
+		//クリッピングマスクここまで
+		//context の復帰
+		ctx.restore();
+
+		//表示の補正値
+		var chara_x = 0;
+		var chara_y = 0;
+		//画面端なら主人公の表示位置をずらす
+		//pos.xhit = -1 : 左端
+		//pos.xhit =  0 : 中央
+		//pos.xhit =  1 : 右端
+		if(pos.xhit==-1){
+			chara_x = - bx;
+		}else if(pos.xhit==1){
+			chara_x = 25 - bx;
+		}
+		if(pos.yhit==-1){
+			chara_y = - by;
+		}else if(pos.yhit==1){
+			chara_y = 25 - by;
+		}
+		for(var i = 0; i < 20; i++){
+			for(var j = 0; j < 18; j++){
+				//xx,yy : chip座標
+				var xx = pos.mx + i;
+				var yy = pos.my + j;
+				if(cx == xx && cy == yy){
+					drawMoveChar(sx+i*25-2-chara_x,sy+j*25-15-chara_y);
+				}
+			}
+		}
 	}
 
 	function drawMoveMapLimitCheck(mx,my){
-		//hit マップの端にcharaが居るときを判定
+		//lx,ly : 画面上に表示されるchip数
+		var lx = 20;
+		var ly = 18;
+		//hit : マップ端にcharaが居るときを判定
 		var xhit = 0, yhit = 0;
 		if(mx < 0){
 			mx = 0;
 			xhit = -1;
 		}
-		if(mx + 21 > mROW){
-			mx = mROW - 21;
+		if(mx + lx > mROW){
+			mx = mROW - lx;
 			xhit = 1;
 		}
 		if(my < 0){
 			my = 0;
 			yhit = -1;
 		}
-		if(my + 19 > mCOL){
-			my = mCOL - 19;
+		if(my + ly > mCOL){
+			my = mCOL - ly;
 			yhit = 1;
 		}
 		return {mx,my,xhit,yhit};
 	}
 
 	function drawMoveMap(r,c,x,y){
-/*
-		if(MainChara.x == r && MainChara.y == c){
-			ctx.fillStyle = '#a00';
-			ctx.drawImage(map_chip,0,0,32,32,x,y,24,24);
-		}else 
-*/
 		if(map[r][c]){
 			ctx.fillStyle = '#a0a';
 			ctx.drawImage(map_chip,0,0,32,32,x,y,24,24);
@@ -630,6 +590,44 @@
 	}
 
 	function moveChar(mx,my,dir){
+		//引数はｄ移動方向に対応する
+		//mx = {-1,0,1}
+		//my = {-1,0,1}
+
+		//移動速度
+		var spd = 3;
+
+		//壁に衝突しそうなら、衝突するまでの分だけ移動
+		var act = canMove(mx*spd,my*spd);
+		if(act.move){
+			if(MainChara.mn<80)
+				MainChara.mn++;
+			/*
+			MainChara.foot++;
+			if(MainChara.foot%3==0){
+				if(MainChara.hung>0){
+					MainChara.hung--;
+					if(MainChara.hp<100)
+						MainChara.hp++;
+					if(MainChara.mn<80)
+						MainChara.mn++;
+				}else{
+					MainChara.hp--;
+				}
+			}
+			*/
+			//move_now = 0;
+			MainChara.x += act.qx;
+			MainChara.y += act.qy;
+			console.log("move "+act.qx+" "+act.qy);
+		}
+		moveEnemy();
+		scanEnemyPos();
+		console.log("now bit "+MainChara.x+" "+MainChara.y);
+		console.log("now chip "+Math.floor(MainChara.x/25)+" "+Math.floor(MainChara.y/25));
+	}
+/*
+	function moveChar(mx,my,dir){
 		if(canMove(mx,my)){
 			MainChara.foot++;
 			if(MainChara.foot%3==0){
@@ -644,38 +642,169 @@
 				}
 			}
 			move_now = 0;
-			//MainChara.x += mx;
-			//MainChara.y += my;
+			MainChara.x += mx;
+			MainChara.y += my;
 		}
 		moveEnemy();
 		scanEnemyPos();
 		console.log("now "+MainChara.x+" "+MainChara.y);
 	}
+	*/
 
 	function modCharDir(dir){
-		MainChara.mwait += 100;
+		MainChara.mwait += 10;
 		MainChara.dir = dir;
 	}
 
 	function canMove(mx,my){
+		//引数はｄ移動方向に対応する
+		//mx = {-spd,0,spd}
+		//my = {-spd,0,spd}
+
+		//移動量を計算する
+		//移動可能な分だけ移動させる
+		var qx = mx;
+		var qy = my;
+		//移動後の dot 座標
+		var nx = MainChara.x + qx;
+		var ny = MainChara.y + qy;
+		//マップ限界チェック
+		//nx = [0, mROW - mSIZE]
+		//ny = [0, mCOL - mSIZE]
+		//の範囲に収める
+		if(nx<0)
+			qx -= nx;
+		if(ny<0)
+			qy -= ny;
+		if(nx>=dROW-mSIZE)
+			qx = (dROW-mSIZE) - MainChara.x;
+		if(ny>=dCOL-mSIZE)
+			qy = (dCOL-mSIZE) - MainChara.y;
+		//移動不可なら
+		if(qx==0 && qy==0){
+			console.log("-> can't move due to map over");
+			return {move:false,qx,qy};
+		}
+		//nxnyの更新
+		nx = MainChara.x + qx;
+		ny = MainChara.y + qy;
+
 		var v = true;
-		var xx = MainChara.x + mx;
-		var yy = MainChara.y + my;
-		console.log("move "+xx+" "+yy);
+		//chip座標に対応する
+		//xx = [0, mROW]
+		//yy = [0, mCOL]
+		var xx = [Math.ceil(nx/25),Math.floor(nx/25)];
+		var yy = [Math.ceil(ny/25),Math.floor(ny/25)];
+		var tx = -1,ty = -1;
+		//移動方向によって移動先のchip座標を変える
+		if(qx>0){
+			tx = Math.ceil(nx/25);
+		}else if(qx<0){
+			tx = Math.floor(nx/25);
+		}
+		if(qy>0){
+			ty = Math.ceil(ny/25);
+		}else if(qy<0){
+			ty = Math.floor(ny/25);
+		}
+		//MainCharaの座標%25!=0の場合（マスとマスの間にいる場合）
+		//移動先のマスを二つ判定する
+		console.log("t "+tx+" "+ty);
+		if(tx!=-1){
+			var hit_down = collisionObject(tx,yy[0]);
+			var hit_up = collisionObject(tx,yy[1]);
+			if(hit_down || hit_up){
+				if(qx>0){
+					//移動量 = 移動先マスの左辺 - 1 - (主人公 x + 主人公の幅)
+					//(主人公 x + 主人公の幅)　= 主人公画像の右辺 x
+					//qx = tx*25 - 1 - (MainChara.x+25);
+					qx = tx*25 - (MainChara.x+25);
+				}
+				if(qx<0){
+					//移動量 = 移動先マスの右辺 - 主人公 x
+					qx = tx*25 - MainChara.x;
+				}
+				qx %= 25;
+
+				//T字路滑らか移動
+				//if(hit_up && !hit_down && MainChara.y%25>12){
+				if(hit_up && !hit_down){
+					qy++;
+				}
+				//if(hit_down && !hit_up && MainChara.y%25!=0 && MainChara.y%25<12){
+				if(hit_down && !hit_up){
+					qy--;
+				}
+
+				//移動不可なら
+				if(qx==0 && qy==0){
+					console.log("-> can't move due to collision wall");
+					return {move:false,qx,qy};
+				}
+				console.log("-> yes, but collision wall");
+			}
+		}
+		if(ty!=-1){
+			var hit_left = collisionObject(xx[0],ty);
+			var hit_right = collisionObject(xx[1],ty);
+			if(hit_left || hit_right){	
+
+				if(qy>0)
+					//qy = ty*25 - 1 - (MainChara.y+25);
+					qy = ty*25 - (MainChara.y+25);
+				if(qy<0)
+					qy = ty*25 - MainChara.y;
+				qy %= 25;
+
+				//T字路滑らか移動
+				if(hit_right && !hit_left){
+					qx++;
+				}
+				if(hit_left && !hit_right){
+					qx--;
+				}
+
+				//移動不可なら
+				if(qx==0 && qy==0){
+					console.log("-> can't move due to collision wall");
+					return {move:false,qx,qy};
+				}
+				console.log("-> yes, but collision wall");
+			}
+		}
+		console.log("[target bit]nxny "+nx+" "+ny);
+		console.log("[target mass]xxyy "+xx+" "+yy);
+		return {move:v,qx,qy};
+	}
+
+	/*
+	function canMove(mx,my){
+		//引数はｄ移動方向に対応する
+		//mx = {-1,0,1}
+		//my = {-1,0,1}
+		var v = true;
+		var xx = Math.floor(MainChara.x/25) + mx;
+		var yy = Math.floor(MainChara.y/25) + my;
+		console.log("move ("+xx+", "+yy+")");
 		if(mx!=0 && (0>xx || xx>mROW-1)){
+			console.log("map over");
 			return false;
 		}
 		if(my!=0 && (0>yy || yy>mCOL-1)){
+			console.log("map over");
 			return false;
 		}
 		if(collisionEnemy(xx,yy)){
+			console.log("collision enemy");
 			v = false;
 		}
 		if(collisionObject(xx,yy)){
+			console.log("collision wall");
 			v = false;
 		}
 		return v;
 	}
+	*/
 
 	function collisionEnemy(x,y){
 		if(emap[x][y]!=-1)
@@ -683,12 +812,20 @@
 		return false;
 	}
 
+
+	function collisionObject(x,y){
+		console.log("CO "+x+" "+y);
+		if(!map[x][y])
+			return true;
+		return false;
+	}
+/*
 	function collisionObject(x,y){
 		if(!map[x][y])
 			return true;
 		return false;
 	}
-
+*/
 	//未実装
 	function moveEnemy(){
 		var xx = MainChara.x, yy = MainChara.y;
@@ -788,6 +925,8 @@
 		return {mx,my};
 	}
 
+	//////////////////////////////////////////////////////////////////////////////////
+
 	function drawMenu(){
 		var ax = 15;
 		var ay = 480;
@@ -837,7 +976,7 @@
 		}
 		if(floor<2){
 			ctx.fillStyle = '#a33';
-			ctx.fillRect(sx+MainChara.x-2,sy+MainChara.y-2,4,4);
+			ctx.fillRect(sx+Math.floor(MainChara.x/25)-2,sy+Math.floor(MainChara.y/25)-2,4,4);
 		}
 		if(floor<4){
 			ctx.fillStyle = '#3a3';
@@ -887,8 +1026,9 @@
 	}
 
 	function attack(){
-		var tx = MainChara.x;
-		var ty = MainChara.y;
+		//対象chip座標は四捨五入で選択
+		var tx = Math.round(MainChara.x/25);
+		var ty = Math.round(MainChara.y/25);
 		var d = MainChara.dir;
 		switch(d){
 			case 2 : ty++; break;
@@ -896,11 +1036,13 @@
 			case 6 : tx++; break;
 			case 8 : ty--; break;
 		}
+		
+		console.log("[act target mass] ("+tx+" ,"+ty+")");
 		//exception対策
 		if(-1<tx && tx<mROW && -1<ty && ty<mCOL){
 			if(emap[tx][ty]!=-1 && MainChara.mn>4){
 				//attack
-				appEffect();
+				//appEffect();
 				Enemy[emap[tx][ty]].exist = false;
 				MainChara.mn -= 5;
 				hunt++;
@@ -914,7 +1056,7 @@
 				}
 			}else if(0<imap[tx][ty] && imap[tx][ty]!=5){
 				//heal
-				appEffect();
+				//appEffect();
 				switch(imap[tx][ty]){
 					case 1 : 
 						MainChara.hp += Math.floor(Math.random()*40);
@@ -938,13 +1080,13 @@
 				imap[tx][ty] = 0;
 			}else if((imap[tx][ty]==0 || !map[tx][ty]) && MainChara.mn>2){
 				//dig
-				appEffect();
+				//appEffect();
 				map[tx][ty] = true;
 				if(imap[tx][ty]==0)
 					imap[tx][ty]=-1;
 				MainChara.mn -= 3;
 				dig++;
-				addMes("壁を壊した！");
+				addMes("壁を壊した！("+tx+", "+ty+")");
 			}
 		}
 		scanEnemyPos();
@@ -997,7 +1139,7 @@
 				return 0;
 			}
 		}
-		if(move_now!=-1)return 0;
+		//if(move_now!=-1)return 0;
 		on_key[key] = true;
 		
 		if(on_key[65]){	//a
