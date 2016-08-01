@@ -7,8 +7,8 @@
 	var dig = 0;
 
 	//game static num
-	var mROW = 100;//map mass size x
-	var mCOL = 100;//map mass size y
+	var mROW = 100;//chip map size : x
+	var mCOL = 100;//chip map size : y
 	var mSIZE = 25;//mass size
 
 	var dROW = mROW * mSIZE;//map dot size x
@@ -17,50 +17,91 @@
 	var mMap = [];
 	var dMap = [];
 
+	//set chip
 	var map_chip = new Image();
 	map_chip.src = 'img/map.png';
 
 	var icon = new Image();
 	icon.src = 'img/icon.png';
 
+	//set animation effect
 	var Effect = function (){
 		this.exist = false;
+		this.x = -1;//dot pos
+		this.y = -1;//dot pos
 		this.img = new Image();
-		this.img.src = 'img/eff.png';
+		this.img.src = 'eff/eff.png';
 		this.mwait = 0;
 	}
+	//effect最大同時描画数
 	var eff_num = 100;
 	var eff = [];
+	var eff_on = false;
 
 	var Chara = function (){
-		this.x = -1;
-		this.y = -1;
-		this.dir = 2;
+		this.x = -1;//dot pos
+		this.y = -1;//dot pos
+		this.dir = 2;//charactor direction
 		this.hp = 100;
 		this.mn = 80;
 		this.hung = 100;
-		this.foot = 0;
+		this.steps = 0;
+		
 		this.exist = true;
 		this.img = new Image();
 		this.img.src = 'img/1.png';
-		this.mwait = 0;
+		this.mwait = 0;//motion wait
+
+		//charactor status
+		this.equip = [-1,-1,-1,-1];
+
+		this.atk = 10;//attack
+		this.def = 0;//defence
+		this.int = 10;//intelligence
+		this.mnd = 0;//mind
+		this.acc = 80;//accuracy
+		this.eva = 0;//evasion
+		this.luck = 0;
+
+		this.spd = 3;//movement speed
+		this.delay = 240;//attack delay
+		this.attack_interval = 0;//attack interval
+
+		this.interval = 0;//all action interval
 	}
 
 	var MainChara = new Chara();
+	//enemy最大生存数
 	var e_num = 1;
 	var Enemy = [];
 
 	var emap = [];
 
+	//message最大保存数
+	var mes_num = 28;
+	var mes_wait = 0;
 	var message = [];
 
-	var move_now = -1;
+	//reserved move
+	var rMove = function (){
+		this.x = 0;
+		this.y = 0;
+		this.spd = 0;
+		this.done = false;
+	}
+	var rm_stacks = 0;
+	var rm_exist = false;
+	var rm_num = 500;
+	var rm = [];
+	for(var i = 0; i < rm_num; i++)
+		rm[i] = new rMove();
 
+	var move_now = -1;
 
 	var map = [];
 	var imap = [];
 	var on_key = [];
-	var on_key_done = [];
+	//var on_key_done = [];
 
 	var canvas = document.getElementById('canvas');
 	canvas.addEventListener("click", onClick, false);
@@ -73,7 +114,7 @@
 	function init(){
 		setInitMap();
 		setEnemy();
-		setEff();
+		setEffect();
 		setMes();
 		requestId = window.requestAnimationFrame(renderTitle); 
 	}
@@ -244,7 +285,7 @@
 		for(var i = 0; i < mROW; i++){
 			for(var j = 0; j < mCOL; j++){
 				if(dmap[j][i]==0)
-					map[i][j]=true;
+					map[i][j] = true;
 			}
 		}
 		requestId = window.requestAnimationFrame(renderTitle); 
@@ -291,52 +332,112 @@
 		}
 	}
 
-	//effect初期化
-	function setEff(){
+	// effect method
+	//////////////////////////////////////////////////////////////////////////////
+
+	//effect 初期化
+	function setEffect(){
 		for(var i = 0; i < eff_num; i++){
 			eff[i] = new Effect();
 		}
 	}
 
-	function appEffect(){
+	function addMainCharaEffect(n){
+		//n : effect　番号
+		var x = MainChara.x;
+		var y = MainChara.y;
+		var d = MainChara.dir;
+
+		//向きによって位置に補正をかける
+		if(d==2){
+			//down
+			y = y + 25;
+		}else if(d==4){
+			//left
+			x = x - 25;
+		}else if(d==6){
+			//right
+			x = x + 25;
+		}else if(d==8){
+			//up
+			y = y - 25;
+		}
+		addEffect(x,y,n);
+	}
+
+	//effect 追加
+	function addEffect(x,y,n){
+		//x,y : dot 座標
+		//n : effect　番号
 		for(var i = 0; i < eff_num; i++){
 			if(!eff[i].exist){
 				eff[i].exist = true;
+				eff[i].x = x;
+				eff[i].y = y;
+				eff[i].img.src = 'eff/eff'+n+'.png';
 				eff[i].mwait = 0;
-				motionEffect();
+				eff_on = true;
 				break;
 			}
 		}
 	}
 
-	function motionEffect(){
+	//effect 描画
+	function drawEffect(){
+		//x,y : dot 座標
 		var v = false;
+
+		//タイル描画開始位置
+		var sx = 165;
+		var sy = 35;
+		//context の保存
+		ctx.save();
+		//描画範囲はクリッピングマスクで領域内に抑えられている
+		ctx.beginPath();
+		ctx.rect(sx,sy,19*mSIZE,17*mSIZE);
+		ctx.clip();
+
+		var pos = calcMapVisibleRange();
+		var xx = pos.cx*mSIZE + pos.bx;
+		var yy = pos.cy*mSIZE + pos.by;
+
+		var eff_size_x = 30;
+		var eff_size_y = 30;
 		for(var i = 0; i < eff_num; i++){
 			if(eff[i].exist){
 				eff[i].mwait += 5;
 				var mot = Math.floor(eff[i].mwait/10);
-				if(eff[i].mwait>100)eff[i].exist = false;
-				ctx.drawImage(eff[i].img,0,mot*240,320,240,0,0,800,600);
+				var dx = sx + eff[i].x - xx;
+				var dy = sy + eff[i].y - yy;
+				ctx.drawImage(eff[i].img,0,mot*240,320,240,dx,dy,eff_size_x,eff_size_y);
+
+				if(eff[i].mwait>100)
+					eff[i].exist = false;
 				v = true;
 			}
 		}
-		if(v){
-			window.requestAnimationFrame(motionEffect);
+		if(!v){
+			eff_on = false;
 		}
+
+		//クリッピングマスクここまで
+		//context の復帰
+		ctx.restore();
 	}
 
+	//message 初期化
 	function setMes(){
-		for(var i = 0; i < 8; i++)
+		for(var i = 0; i < mes_num; i++)
 			message[i] = "";
 		message[0] = "ようこそ！";
 	}
 
+	//////////////////////////////////////////////////////////////////////////////
+
 	function renderTitle(){
-		//var str = "SampleText";
-		//var margin = w - 20*str.length;
+		//set display
 		ctx.fillStyle = '#aaa';
 		ctx.fillRect(0,0,w,h);
-
 		var a = 5;
 		ctx.fillStyle = '#222';
 		ctx.fillRect(a,a,w-2*a,h-2*a);
@@ -349,22 +450,17 @@
 		//ctx.strokeText(str,margin/2,455,510);
 		//ctx.fillText(str,margin/2,455);
 
-		//frame count
-		motionChar();
+		//毎フレーム実行する
+		runPerFrame();
 
+		//描画関連
 		onKeyCheck();
-		drawMoveCalc();
-
-		//drawCalc();
-		/*
-		if(move_now!=-1){
-			drawMoveCalc();
-			moveDoneCheck();
-		}else{
-			drawCalc();
-		}
-		*/
+		drawCalc();
+		//moveDoneCheck();
 		drawMenu();
+
+		if(eff_on)
+			drawEffect();
 
 		if(MainChara.hp<1){
 			ctx.fillStyle = '#fff';
@@ -377,6 +473,35 @@
 		requestId = window.requestAnimationFrame(renderTitle); 
 	}
 
+	//毎フレーム実行する
+	function runPerFrame(){
+		updateAttackInterval();//update attack interval
+		motionChar();//update charactor motion
+		runReservedMove();
+	}
+
+	function runReservedMove(){
+		var done = true;
+		for(var i = 0; i < rm_stacks; i++){
+			if(!rm[i].done){
+				done = false;
+				moveChar(rm[i].x,rm[i].y,rm[i].s);
+				rm[i].done = true;
+				break;
+			}
+		}
+		if(done){
+			rm_stacks = 0;
+		}
+	}
+
+	function updateAttackInterval(){
+		if(MainChara.attack_interval>0)
+			MainChara.attack_interval -= 15;
+		if(MainChara.attack_interval<0)
+			MainChara.attack_interval = 0;
+	}
+
 	function motionChar(){
 		MainChara.mwait+=3;
 		if(MainChara.mwait>400)
@@ -387,22 +512,22 @@
 	function onKeyCheck(){
 		//a
 		if(on_key[65]){
-			moveChar(-1,0);
+			moveChar(-1,0,3);
 			modCharDir(4);
 		}
 		//s
 		if(on_key[83]){
-			moveChar(0,1);
+			moveChar(0,1,3);
 			modCharDir(2);
 		}
 		//d
 		if(on_key[68]){
-			moveChar(1,0);
+			moveChar(1,0,3);
 			modCharDir(6);
 		}
 		//w
 		if(on_key[87]){
-			moveChar(0,-1);
+			moveChar(0,-1,3);
 			modCharDir(8);
 		}
 		//enter
@@ -410,9 +535,15 @@
 			attack();
 			on_key[13] = false;
 		}
+		//p
+		if(on_key[80]){
+			if(MainChara.attack_interval==0 && rm_stacks==0)
+				slash();
+			//on_key[80] = false;
+		}
 	}
 
-	function drawMoveCalc(){
+	function drawCalc(){
 		//MainChara の向き
 		var d = Math.floor(MainChara.dir/2) - 1;
 		var dx = [0,1,-1,0];
@@ -446,7 +577,7 @@
 		ctx.clip();
 
 		//マップ端補正値の判定
-		var pos = drawMoveMapLimitCheck(mx,my);
+		var pos = calcMapLimitCheck(mx,my);
 		//chip表示位置の補正値
 		var chip_x = bx;
 		var chip_y = by;
@@ -469,7 +600,7 @@
 				//xx,yy : chip座標
 				var xx = pos.mx + i;
 				var yy = pos.my + j;
-				drawMoveMap(xx,yy,sx+i*25-chip_x,sy+j*25-chip_y);
+				drawMapChip(xx,yy,sx+i*25-chip_x,sy+j*25-chip_y);
 			}
 		}
 
@@ -500,13 +631,38 @@
 				var xx = pos.mx + i;
 				var yy = pos.my + j;
 				if(cx == xx && cy == yy){
-					drawMoveChar(sx+i*25-2-chara_x,sy+j*25-15-chara_y);
+					drawMainChar(sx+i*25-2-chara_x,sy+j*25-15-chara_y);
 				}
 			}
 		}
 	}
 
-	function drawMoveMapLimitCheck(mx,my){
+	function calcMapVisibleRange(){
+		var cx = Math.floor(MainChara.x / 25) - 10;
+		var cy = Math.floor(MainChara.y / 25) - 9;
+		var bx = Math.floor(MainChara.x % 25);
+		var by = Math.floor(MainChara.y % 25);
+
+		//マップ端補正値の判定
+		var pos = calcMapLimitCheck(cx,cy);
+		//chip map 座標の更新
+		cx = pos.mx;
+		cy = pos.my;
+		//chip　表示位置の補正値
+		if(pos.xhit==-1){
+			bx = 0;
+		}else if(pos.xhit==1){
+			bx = 25;
+		}
+		if(pos.yhit==-1){
+			by = 0;
+		}else if(pos.yhit==1){
+			by = 25;
+		}
+		return {cx,cy,bx,by};
+	}
+
+	function calcMapLimitCheck(mx,my){
 		//lx,ly : 画面上に表示されるchip数
 		var lx = 20;
 		var ly = 18;
@@ -531,7 +687,7 @@
 		return {mx,my,xhit,yhit};
 	}
 
-	function drawMoveMap(r,c,x,y){
+	function drawMapChip(r,c,x,y){
 		if(map[r][c]){
 			ctx.fillStyle = '#a0a';
 			ctx.drawImage(map_chip,0,0,32,32,x,y,24,24);
@@ -545,7 +701,7 @@
 		}
 	}
 
-	function drawMoveChar(x,y){
+	function drawMainChar(x,y){
 		var dir = MainChara.dir;
 		var mot = Math.floor(MainChara.mwait / 100);
 		if(mot>2)mot = 1;
@@ -563,6 +719,7 @@
 				ctx.drawImage(MainChara.img,20*mot,84,20,28,x,y,28,38);
 				break;
 		}
+		//ctx.fillRect(x,y,5,5);
 	}
 
 	function drawMoveEnemy(xx,yy,x,y){
@@ -572,92 +729,72 @@
 	}
 
 	function moveDoneCheck(){
-		if(move_now>99){
-			move_now =- 1;
-			switch(MainChara.dir){
-				case 2 : MainChara.y++; break;
-				case 4 : MainChara.x--; break;
-				case 6 : MainChara.x++; break;
-				case 8 : MainChara.y--; break;
-			}
-			if(imap[MainChara.x][MainChara.y]==5){
-				addMes("地下へ降りた！");
-				floor++;
-				setMapRandom();
-				resetEnemy();
-			}
-		}
+		if(imap[Math.round(MainChara.x/mSIZE)][Math.round(MainChara.y/mSIZE)]==5){
+			addMes("地下へ降りた！");
+			floor++;
+			setMapRandom();
+			resetEnemy();
+		}	
 	}
 
-	function moveChar(mx,my,dir){
-		//引数はｄ移動方向に対応する
-		//mx = {-1,0,1}
-		//my = {-1,0,1}
-
-		//移動速度
-		var spd = 3;
-
-		//壁に衝突しそうなら、衝突するまでの分だけ移動
-		var act = canMove(mx*spd,my*spd);
-		if(act.move){
-			if(MainChara.mn<80)
-				MainChara.mn++;
-			/*
-			MainChara.foot++;
-			if(MainChara.foot%3==0){
-				if(MainChara.hung>0){
-					MainChara.hung--;
-					if(MainChara.hp<100)
-						MainChara.hp++;
-					if(MainChara.mn<80)
-						MainChara.mn++;
-				}else{
-					MainChara.hp--;
-				}
-			}
-			*/
-			//move_now = 0;
-			MainChara.x += act.qx;
-			MainChara.y += act.qy;
-			console.log("move "+act.qx+" "+act.qy);
-		}
-		moveEnemy();
-		scanEnemyPos();
-		console.log("now bit "+MainChara.x+" "+MainChara.y);
-		console.log("now chip "+Math.floor(MainChara.x/25)+" "+Math.floor(MainChara.y/25));
-	}
-/*
-	function moveChar(mx,my,dir){
-		if(canMove(mx,my)){
-			MainChara.foot++;
-			if(MainChara.foot%3==0){
-				if(MainChara.hung>0){
-					MainChara.hung--;
-					if(MainChara.hp<100)
-						MainChara.hp++;
-					if(MainChara.mn<80)
-						MainChara.mn++;
-				}else{
-					MainChara.hp--;
-				}
-			}
-			move_now = 0;
-			MainChara.x += mx;
-			MainChara.y += my;
-		}
-		moveEnemy();
-		scanEnemyPos();
-		console.log("now "+MainChara.x+" "+MainChara.y);
-	}
-	*/
+	// move method
+	//////////////////////////////////////////////////////////////////////////////////
 
 	function modCharDir(dir){
 		MainChara.mwait += 10;
 		MainChara.dir = dir;
 	}
 
+	function moveChar(mx,my,s){
+		//引数は移動方向に対応する
+		//mx = {-1,0,1}
+		//my = {-1,0,1}
+
+		//移動速度
+		var spd = s;
+		//この辺に速度の補正値とか
+
+		//壁に衝突しそうなら、衝突するまでの分だけ移動
+		var act = canMove(mx*spd,my*spd);
+		if(act.move){
+
+			//移動毎の処理
+			runPerMove();
+
+			//MainChara 移動処理
+			MainChara.x += act.qx;
+			MainChara.y += act.qy;
+			//console.log("move "+act.qx+" "+act.qy);
+		}
+		moveEnemy();
+		scanEnemyPos();
+		console.log("now bit "+MainChara.x+" "+MainChara.y);
+		console.log("now chip "+Math.floor(MainChara.x/25)+" "+Math.floor(MainChara.y/25));
+	}
+
+	//移動毎の処理 
+	function runPerMove(){
+		if(MainChara.mn<80)
+			MainChara.mn+=1;
+		/*
+		MainChara.steps++;
+		if(MainChara.steps%3==0){
+			if(MainChara.hung>0){
+				MainChara.hung--;
+				if(MainChara.hp<100)
+					MainChara.hp++;
+				if(MainChara.mn<80)
+					MainChara.mn++;
+			}else{
+				MainChara.hp--;
+			}
+		}
+		*/
+		//move_now = 0;
+	}
+
 	function canMove(mx,my){
-		//引数はｄ移動方向に対応する
+		//引数は移動方向に対応する
 		//mx = {-spd,0,spd}
 		//my = {-spd,0,spd}
 
@@ -727,11 +864,9 @@
 				qx %= 25;
 
 				//T字路滑らか移動
-				//if(hit_up && !hit_down && MainChara.y%25>12){
 				if(hit_up && !hit_down){
 					qy++;
 				}
-				//if(hit_down && !hit_up && MainChara.y%25!=0 && MainChara.y%25<12){
 				if(hit_down && !hit_up){
 					qy--;
 				}
@@ -772,40 +907,12 @@
 				console.log("-> yes, but collision wall");
 			}
 		}
-		console.log("[target bit]nxny "+nx+" "+ny);
-		console.log("[target mass]xxyy "+xx+" "+yy);
+		//console.log("[target bit]nxny "+nx+" "+ny);
+		//console.log("[target mass]xxyy "+xx+" "+yy);
 		return {move:v,qx,qy};
 	}
 
-	/*
-	function canMove(mx,my){
-		//引数はｄ移動方向に対応する
-		//mx = {-1,0,1}
-		//my = {-1,0,1}
-		var v = true;
-		var xx = Math.floor(MainChara.x/25) + mx;
-		var yy = Math.floor(MainChara.y/25) + my;
-		console.log("move ("+xx+", "+yy+")");
-		if(mx!=0 && (0>xx || xx>mROW-1)){
-			console.log("map over");
-			return false;
-		}
-		if(my!=0 && (0>yy || yy>mCOL-1)){
-			console.log("map over");
-			return false;
-		}
-		if(collisionEnemy(xx,yy)){
-			console.log("collision enemy");
-			v = false;
-		}
-		if(collisionObject(xx,yy)){
-			console.log("collision wall");
-			v = false;
-		}
-		return v;
-	}
-	*/
-
+	//未実装
 	function collisionEnemy(x,y){
 		if(emap[x][y]!=-1)
 			return true;
@@ -814,18 +921,11 @@
 
 
 	function collisionObject(x,y){
-		console.log("CO "+x+" "+y);
 		if(!map[x][y])
 			return true;
 		return false;
 	}
-/*
-	function collisionObject(x,y){
-		if(!map[x][y])
-			return true;
-		return false;
-	}
-*/
+
 	//未実装
 	function moveEnemy(){
 		var xx = MainChara.x, yy = MainChara.y;
@@ -860,81 +960,32 @@
 			}
 		}
 	}
-
-	function drawCalc(){
-		var ax = 155;
-		var ay = 80;
-		ctx.fillStyle = '#070';
-		ctx.fillRect(ax,ay-55,w-2*ax+5,h-2*ay+5);
-
-		var sx = 165;
-		var sy = 35;
-		var cx = MainChara.x | 0;
-		var cy = MainChara.y | 0;
-		var mx = cx - 9;
-		var my = cy - 8;
-		var pos = drawMapLimitCheck(mx,my);
-		for(var i = 0; i < 19; i++){
-			for(var j = 0; j < 17; j++){
-				var xx = pos.mx + i;
-				var yy = pos.my + j;
-				//タイル描画
-				drawMap(xx,yy,i*25+sx,j*25+sy);
+	
+	//未実装
+	function scanEnemyPos(){
+		for(var i = 0; i < mROW; i++){
+			for(var j = 0; j < mCOL; j++){
+				emap[i][j] = -1;
 			}
 		}
-
-		for(var i = 0; i < 19; i++){
-			for(var j = 0; j < 17; j++){
-				var xx = pos.mx + i;
-				var yy = pos.my + j;
-
-				//chara,enemy描画
-				if(emap[xx][yy] != -1){
-					drawEnemy(xx,yy,i*25+sx-2,j*25+sy-15);
-				}
-				if(cx == xx && cy == yy){
-					drawChar(i*25+sx-2,j*25+sy-15);
-				}
-			}
+		for(var i = 0; i < e_num; i++){
+			if(Enemy[i].exist)
+				emap[Enemy[i].x][Enemy[i].y] = i;
 		}
 	}
 
-	function drawMap(r,c,x,y){
-		if(map[r][c]){
-			ctx.fillStyle = '#a0a';
-			ctx.drawImage(map_chip,0,0,32,32,x,y,24,24);
-		}else{
-			ctx.fillStyle = '#aa0';
-			ctx.drawImage(map_chip,0,0,32,32,x,y,24,24);
-			ctx.drawImage(map_chip,224,0,32,32,x,y,24,24);
-		}
-		if(imap[r][c]!=-1){
-			ctx.drawImage(map_chip,32+32*imap[r][c],0,32,32,x,y,24,24);
-		}
-	}
-
-	function drawMapLimitCheck(mx,my){
-		if(mx < 0)
-			mx = 0;
-		if(mx + 19 > mROW)
-			mx = mROW - 19;
-		if(my < 0)
-			my = 0;
-		if(my + 17 > mCOL)
-			my = mCOL - 17;
-		return {mx,my};
-	}
-
+	// draw system
 	//////////////////////////////////////////////////////////////////////////////////
 
 	function drawMenu(){
 		var ax = 15;
 		var ay = 480;
 		ctx.fillStyle = '#ddd';
-		ctx.fillRect(ax,ay,635,105);
-		ctx.fillRect(ax,25,130,445);
-		ctx.fillRect(ax+645,25,125,560);
+		ctx.fillRect(ax,ay,635,105)//下フレーム
+		ctx.fillRect(ax,25,130,445);//左フレーム
+		ctx.fillRect(ax+645,25,125,560);//右フレーム
 
+		//左枠メニュー描画
 		ctx.fillStyle = '#333';
 		ctx.font= 'bold 20px Meiryo';
 		ctx.fillText("地下",30,70);
@@ -951,12 +1002,6 @@
 		ctx.fillText(MainChara.hp,70,125);
 		ctx.fillText(MainChara.mn,70,175);
 		ctx.fillText(MainChara.hung,70,225);
-
-
-		ctx.font= 'bold 15px Meiryo';
-		for(var i = 0; i < 5; i++){
-			ctx.fillText(message[i],20,578-i*20);
-		}
 
 		var sx = 30, sy = 350;
 		ctx.fillStyle = '#577';
@@ -984,45 +1029,83 @@
 			ctx.fillRect(sx+Enemy[0].x-2,sy+Enemy[0].y-2,4,4);
 			ctx.globalAlpha = 1.0;
 		}
-	}
 
-	function drawChar(x,y){
-		var dir = MainChara.dir;
-		var mot = Math.floor(MainChara.mwait / 100);
-		if(mot>2)mot = 1;
-		switch(dir){
-			case 2 : //down
-				ctx.drawImage(MainChara.img,20*mot,0,20,28,x,y,28,38);
-				break;
-			case 4 : //left
-				ctx.drawImage(MainChara.img,20*mot,28,20,28,x,y,28,38);
-				break;
-			case 6 : //right
-				ctx.drawImage(MainChara.img,20*mot,56,20,28,x,y,28,38);
-				break;
-			case 8 : //up
-				ctx.drawImage(MainChara.img,20*mot,84,20,28,x,y,28,38);
-				break;
+
+		//message描画
+		ctx.font= 'bold 15px Meiryo';
+		if(on_key[76]){
+			if(mes_wait<80)mes_wait += 8;
+			if(mes_wait<88)mes_wait += 2;
+			if(mes_wait<96)mes_wait += 2;
+			if(mes_wait<100)mes_wait += 2;
+		}else if(mes_wait>0){
+			if(mes_wait>20)mes_wait -= 8;
+			if(mes_wait>12)mes_wait -= 2;
+			if(mes_wait>4)mes_wait -= 2;
+			if(mes_wait>0)mes_wait -= 2;
 		}
-	}
+		//描画領域拡張
+		if(mes_wait>0){
+			var a = mes_wait/100;
+			console.log(a);
+			ctx.fillStyle = '#ddd';
 
-	function drawEnemy(xx,yy,x,y){
-		var mot = Math.floor(MainChara.mwait / 100);
-		if(mot>2)mot = 1;
-		ctx.drawImage(Enemy[emap[xx][yy]].img,20*mot,0,20,28,x,y,28,38);
-	}
+			//クリッピングマスク
+			ctx.save();
+			ctx.beginPath();
+			ctx.rect(ax,ay-Math.floor(455*a),635,105+Math.floor(455*a));
+			ctx.clip();
 
-	//生存enemyの更新
-	function scanEnemyPos(){
-		for(var i = 0; i < mROW; i++){
-			for(var j = 0; j < mCOL; j++){
-				emap[i][j] = -1;
+			ctx.fillRect(ax,ay-Math.floor(455*a),635,105+Math.floor(455*a))//下フレーム拡張
+			ctx.fillStyle = '#333';
+			for(var i = 0; i < 27; i++){
+				ctx.fillText(message[i],20,578-i*20);
+			}
+
+			//クリッピングマスクここまで
+			ctx.restore();
+		}else{
+			ctx.fillStyle = '#333';
+			for(var i = 0; i < 5; i++){
+				ctx.fillText(message[i],20,578-i*20);
 			}
 		}
-		for(var i = 0; i < e_num; i++){
-			if(Enemy[i].exist)
-				emap[Enemy[i].x][Enemy[i].y] = i;
+	}
+
+	// action system
+	//////////////////////////////////////////////////////////////////////////
+
+	function slash(){
+		//set attack interval
+		MainChara.attack_interval = MainChara.delay;
+
+		var d = MainChara.dir;
+		if(d==4){
+			addReservedMove(-1,0,8,5);
+			addReservedMove(-1,0,4,5);
+			addReservedMove(-1,0,2,5);
+			addReservedMove(-1,0,1,5);
+			addReservedMove(1,0,8,5);
+			addReservedMove(1,0,8,5);
+		}else if(d==2){
+			addReservedMove(0,1,4,5);
+			addReservedMove(0,1,2,5);
+			addReservedMove(0,1,1,5);
+		}else if(d==6){
+			addReservedMove(1,0,4,5);
+			addReservedMove(1,0,2,5);
+			addReservedMove(1,0,1,5);
+		}else{
+			addReservedMove(0,-1,4,5);
+			addReservedMove(0,-1,2,5);
+			addReservedMove(0,-1,1,5);
 		}
+		addMainCharaEffect("");
+
+	}
+
+	function damaged(){
+
 	}
 
 	function attack(){
@@ -1092,8 +1175,21 @@
 		scanEnemyPos();
 	}
 
+	function addReservedMove(x,y,s,cnt){
+		console.log(rm_stacks);
+		if(rm_stacks + cnt >= rm_num)
+			return 0;
+		for(var i = 0; i < cnt; i++){
+			rm[rm_stacks].x = x;
+			rm[rm_stacks].y = y;
+			rm[rm_stacks].s = s;
+			rm[rm_stacks].done = false;
+			rm_stacks++;
+		}
+	}
+
 	function addMes(str){
-		for(var i = 6; i > -1 ; i--){
+		for(var i = mes_num　- 2; i > -1 ; i--){
 			message[i+1] = message[i];
 		}
 		message[0] = str;
@@ -1104,7 +1200,7 @@
 		MainChara.mn = 80;
 		MainChara.dir = 2;
 		MainChara.hung = 100;
-		MainChara.foot = 0;
+		MainChara.steps = 0;
 
 		floor = 0;
 		hunt = 0;
@@ -1139,34 +1235,12 @@
 				return 0;
 			}
 		}
-		//if(move_now!=-1)return 0;
 		on_key[key] = true;
-		
-		if(on_key[65]){	//a
-			moveChar(-1,0,4);
-			modCharDir(4);
-		}
-		if(on_key[83]){	//s
-			moveChar(0,1,2);
-			modCharDir(2);
-		}
-		if(on_key[68]){	//d
-			moveChar(1,0,6);
-			modCharDir(6);
-		}
-		if(on_key[87]){	//w
-			moveChar(0,-1,8);
-			modCharDir(8);
-		}
-		if(on_key[13]){	//enter
-			attack();
-		}
 	};
 
 	document.onkeyup = function (e){
 		var key = e.keyCode;
 		on_key[key] = false;
-		on_key_done[key] = false;
 	};
 	
 })();
