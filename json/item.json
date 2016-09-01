@@ -1,0 +1,110 @@
+"item" : [
+	{
+	"name" : "ポーション",
+	"help" : "普通の水薬です。",
+	"mark" : "薬",
+	"use" : true,
+	"time" : 180,
+	"effect" : {
+		"buff" : [0],
+		"debuff" : [0],
+
+		"hp" : 10,
+		"mn" : 10,
+
+		"atk" : 10,
+		"def" : 10,
+		"int" : 10,
+		"mnd" : 10,
+		"acc" : 10,
+		"eva" : 10,
+		"luck" : 10,
+
+		"spd" : 10
+	},
+	"special" : 0,
+
+	"price" : 100
+	},
+	{
+	"name" : "スクロール",
+	"help" : "普通のスクロールです。",
+	"mark" : "巻物",
+	"use" : true,
+	"time" : 0,
+	"effect" : {
+		"buff" : [0],
+		"debuff" : [0],
+
+		"hp" : 10,
+		"mn" : 10,
+
+		"atk" : 10,
+		"def" : 10,
+		"int" : 10,
+		"mnd" : 10,
+		"acc" : 10,
+		"eva" : 10,
+		"luck" : 10,
+
+		"spd" : 10
+	},
+	"special" : 0,
+
+	"price" : 100
+	},
+	{
+	"name" : "鉄鉱石",
+	"help" : "普通の鉄鉱石です。",
+	"mark" : "素材",
+	"use" : false,
+	"time" : 0,
+	"effect" : {
+		"buff" : [0],
+		"debuff" : [0],
+
+		"hp" : 10,
+		"mn" : 10,
+
+		"atk" : 10,
+		"def" : 10,
+		"int" : 10,
+		"mnd" : 10,
+		"acc" : 10,
+		"eva" : 10,
+		"luck" : 10,
+
+		"spd" : 10
+	},
+	"special" : 0,
+
+	"price" : 100
+	},
+	{
+	"name" : "金貨袋【小】",
+	"help" : "普通の金貨袋です。",
+	"mark" : "素材",
+	"use" : true,
+	"time" : 0,
+	"effect" : {
+		"buff" : [0],
+		"debuff" : [0],
+
+		"hp" : 10,
+		"mn" : 10,
+
+		"atk" : 10,
+		"def" : 10,
+		"int" : 10,
+		"mnd" : 10,
+		"acc" : 10,
+		"eva" : 10,
+		"luck" : 10,
+
+		"spd" : 10
+	},
+	"special" : 0,
+
+	"price" : 100
+	},
+]

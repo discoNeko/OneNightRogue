@@ -1,0 +1,83 @@
+"weapon" : [
+	{
+	"name" : "ブレード",
+	"help" : "普通の剣です。",
+	"mark" : "長剣",
+	"equip" : [0],
+	"status" : {
+		"hp" : 10,
+		"mn" : 10,
+
+		"atk" : 10,
+		"def" : 10,
+		"int" : 10,
+		"mnd" : 10,
+		"acc" : 10,
+		"eva" : 10,
+		"luck" : 10,
+
+		"delay" : 240,
+		"range" : 100,
+		"spd" : 10
+	},
+	"element" : 0,
+	"passive" : 0,
+	"special" : 0,
+
+	"price" : 100
+	},
+	{
+	"name" : "ナイフ",
+	"help" : "普通のナイフです。",
+	"mark" : "短剣",
+	"equip" : [0],
+	"status" : {
+		"hp" : 10,
+		"mn" : 10,
+
+		"atk" : 10,
+		"def" : 10,
+		"int" : 10,
+		"mnd" : 10,
+		"acc" : 10,
+		"eva" : 10,
+		"luck" : 10,
+
+		"delay" : 240,
+		"range" : 100,
+		"spd" : 10
+	},
+	"element" : 0,
+	"passive" : 0,
+	"special" : 0,
+
+	"price" : 100
+	},
+	{
+	"name" : "アックス",
+	"help" : "普通のアックスです。",
+	"mark" : "手斧",
+	"equip" : [0],
+	"status" : {
+		"hp" : 10,
+		"mn" : 10,
+
+		"atk" : 10,
+		"def" : 10,
+		"int" : 10,
+		"mnd" : 10,
+		"acc" : 10,
+		"eva" : 10,
+		"luck" : 10,
+
+		"delay" : 240,
+		"range" : 100,
+		"spd" : 10
+	},
+	"element" : 0,
+	"passive" : 0,
+	"special" : 0,
+
+	"price" : 100
+	}
+]

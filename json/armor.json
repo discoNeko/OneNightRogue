@@ -1,0 +1,77 @@
+"armor" : [
+	{
+	"name" : "バイザー",
+	"help" : "普通のバイザーです。",
+	"mark" : "頭",
+	"equip" : [1,2,3,4],
+	"status" : {
+		"hp" : 10,
+		"mn" : 10,
+
+		"atk" : 10,
+		"def" : 10,
+		"int" : 10,
+		"mnd" : 10,
+		"acc" : 10,
+		"eva" : 10,
+		"luck" : 10,
+
+		"spd" : 10
+	},
+	"element" : 0,
+	"passive" : 0,
+	"special" : 0,
+
+	"price" : 100
+	},
+	{
+	"name" : "コート",
+	"help" : "普通のコートです。",
+	"mark" : "胴体",
+	"equip" : [1,2,3,4],
+	"status" : {
+		"hp" : 10,
+		"mn" : 10,
+
+		"atk" : 10,
+		"def" : 10,
+		"int" : 10,
+		"mnd" : 10,
+		"acc" : 10,
+		"eva" : 10,
+		"luck" : 10,
+
+		"spd" : 10
+	},
+	"element" : 0,
+	"passive" : 0,
+	"special" : 0,
+
+	"price" : 100
+	},
+	{
+	"name" : "ブーツ",
+	"help" : "普通のブーツです。",
+	"mark" : "両足",
+	"equip" : [0],
+	"status" : {
+		"hp" : 10,
+		"mn" : 10,
+
+		"atk" : 10,
+		"def" : 10,
+		"int" : 10,
+		"mnd" : 10,
+		"acc" : 10,
+		"eva" : 10,
+		"luck" : 10,
+
+		"spd" : 10
+	},
+	"element" : 0,
+	"passive" : 0,
+	"special" : 0,
+
+	"price" : 100
+	}
+]

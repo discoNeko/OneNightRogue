@@ -1,0 +1,70 @@
+"enemy" : [
+	{
+	"name" : "ゴブリン",
+	"graphic" : 0,
+	"img" : 0,
+
+	"level" : 10,
+	"hp" : 10,
+	"mn" : 10,
+	"size" : 1.0,
+
+	"equip" : [0,0,0,0],
+
+	"atk" : 10,
+	"def" : 10,
+	"int" : 10,
+	"mnd" : 10,
+	"acc" : 10,
+	"eva" : 10,
+	"luck" : 10,
+
+	"delay" : 240,
+	"spd" : 10,
+
+	"drop" : [{
+		"sort" : 0,
+		"num" : 0,
+		"rate" : 80
+	},
+	{
+		"sort" : 0,
+		"num" : 0,
+		"rate" : 10
+	}],
+	},
+	{
+	"name" : "バード",
+	"graphic" : 0,
+	"img" : 0,
+
+	"level" : 10,
+	"hp" : 10,
+	"mn" : 10,
+	"size" : 1.0,
+
+	"equip" : [0,0,0,0],
+
+	"atk" : 10,
+	"def" : 10,
+	"int" : 10,
+	"mnd" : 10,
+	"acc" : 10,
+	"eva" : 10,
+	"luck" : 10,
+
+	"delay" : 240,
+	"spd" : 10,
+
+	"drop" : [{
+		"sort" : 0,
+		"num" : 0,
+		"rate" : 80
+	},
+	{
+		"sort" : 0,
+		"num" : 0,
+		"rate" : 10
+	}],
+	},
+]
